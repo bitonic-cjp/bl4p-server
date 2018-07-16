@@ -1,0 +1,9 @@
+[run]
+branch = true
+
+#Omit test directory
+omit = ./*
+
+[html]
+directory = coverage_html
+

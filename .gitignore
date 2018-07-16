@@ -1,2 +1,7 @@
+#Python related
 __pycache__
+
+#Python-coverage related
+.coverage
+coverage_html
 
