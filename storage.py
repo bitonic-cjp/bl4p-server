@@ -35,9 +35,58 @@ class Storage:
 	atomic database transactions.
 	'''
 
+	class UserNotFound(Exception):
+		pass
+
+	class TransactionNotFound(Exception):
+		pass
+
+
 	def __init__(self):
 		self.users = {}
 		self.transactions = {}
+
+
+	def getUser(self, userid):
+		'''
+		Get the user data structure for a user.
+
+		:param userid: the user ID
+
+		:returns: the user data structure
+
+		:raises UserNotFound: No user was found with this ID
+		'''
+
+		try:
+			ret = self.users[userid]
+		except KeyError:
+			raise Storage.UserNotFound()
+
+		assert ret.id == userid
+		return ret
+
+
+	def getTransaction(self, paymentHash, acceptableStates):
+		'''
+		Get the user data structure for a transaction.
+
+		:param paymentHash: the payment hash
+		:param acceptableStates: iterable containing acceptable states
+
+		:returns: the transaction data structure
+
+		:raises TransactionNotFound: No transaction was found for this payment hash and acceptable states
+		'''
+		try:
+			ret = self.transactions[paymentHash]
+		except KeyError:
+			raise Storage.TransactionNotFound()
+
+		if ret.status not in acceptableStates:
+			raise Storage.TransactionNotFound()
+
+		return ret
 
 
 	def startTransaction(self, receiver_userid, amount, timeDelta):
@@ -49,11 +98,12 @@ class Storage:
 		:param timeDelta: the maximum time for the sender to respond, in seconds
 
 		:returns: the payment hash
+
+		:raises UserNotFound: No user was found with this ID
 		'''
 
 		#Just check that the user exists
-		receiver = self.users[receiver_userid]
-		assert receiver.id == receiver_userid
+		self.getUser(receiver_userid)
 
 		fee = 0 #TODO
 
@@ -84,9 +134,13 @@ class Storage:
 		:param paymentHash: the payment hash of the transaction
 		'''
 
-		tx = self.transactions[paymentHash]
-		if tx.status == TransactionStatus.waiting_for_sender:
+		try:
+			tx = self.getTransaction(paymentHash, [TransactionStatus.waiting_for_sender])
 			tx.status = TransactionStatus.timeout
+		except Storage.TransactionNotFound:
+			#It's OK to NOP if that transaction does not exist,
+			#or if it no longer has the required state.
+			pass
 
 
 	def processSenderAck(self, sender_userid, amount, paymentHash):
@@ -98,16 +152,18 @@ class Storage:
 		:param paymentHash: the payment hash
 
 		:returns: the payment preimage
+
+		:raises UserNotFound: No user was found with this ID
+		:raises TransactionNotFound: No transaction was found for this payment hash
 		'''
 
-		sender = self.users[sender_userid]
-		assert sender.id == sender_userid
+		sender = self.getUser(sender_userid)
 
-		tx = self.transactions[paymentHash]
-
-		assert tx.status in \
-			TransactionStatus.waiting_for_sender, \
+		tx = self.getTransaction(paymentHash,
+			[
+			TransactionStatus.waiting_for_sender,
 			TransactionStatus.waiting_for_receiver
+			])
 
 		assert sender.balance >= amount
 		assert tx.amountIncoming == amount
@@ -123,13 +179,13 @@ class Storage:
 		Process transaction claim by the receiver.
 
 		:param preimage: the payment preimage
+
+		:raises TransactionNotFound: No transaction was found for this preimage
 		'''
 
 		paymentHash = sha256(preimage)
-		tx = self.transactions[paymentHash]
-		receiver = self.users[tx.receiver_userid]
-
-		assert tx.status == TransactionStatus.waiting_for_receiver
+		tx = self.getTransaction(paymentHash, [TransactionStatus.waiting_for_receiver])
+		receiver = self.getUser(tx.receiver_userid)
 
 		receiver.balance += tx.amountOutgoing
 		tx.status = TransactionStatus.completed
