@@ -19,7 +19,7 @@ TransactionStatus = Enum(['waiting_for_sender', 'waiting_for_receiver', 'timeout
 
 class Transaction(Struct):
 	sender_userid = None
-	received_userid = None
+	receiver_userid = None
 	amount = 0
 	preimage = None
 	timeoutTime = None
