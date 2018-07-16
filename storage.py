@@ -1,7 +1,12 @@
-import time
+import hashlib
 import os
+import time
 
 from utils import Struct, Enum
+
+
+
+sha256 = lambda preimage: hashlib.sha256(preimage).digest()
 
 
 
@@ -33,7 +38,7 @@ class Storage:
 		assert receiver.id == receiver_userid
 
 		preimage = os.urandom(32) #TODO: HD wallet instead?
-		paymentHash = preimage #TODO: hash function
+		paymentHash = sha256(preimage)
 		timeoutTime = time.time() + timeDelta
 
 		tx = Transaction(
@@ -71,7 +76,7 @@ class Storage:
 
 
 	def processReceiverClaim(self, preimage):
-		paymentHash = preimage #TODO: hash function
+		paymentHash = sha256(preimage)
 		tx = self.transactions[paymentHash]
 		receiver = self.users[tx.receiver_userid]
 
