@@ -20,7 +20,8 @@ TransactionStatus = Enum(['waiting_for_sender', 'waiting_for_receiver', 'timeout
 class Transaction(Struct):
 	sender_userid = None
 	receiver_userid = None
-	amount = 0
+	amountIncoming = 0
+	amountOutgoing = 0
 	preimage = None
 	timeoutTime = None
 	status = None
@@ -54,6 +55,11 @@ class Storage:
 		receiver = self.users[receiver_userid]
 		assert receiver.id == receiver_userid
 
+		fee = 0 #TODO
+
+		assert amount > 0
+		assert amount - fee > 0
+
 		preimage = os.urandom(32) #TODO: HD wallet instead?
 		paymentHash = sha256(preimage)
 		timeoutTime = time.time() + timeDelta
@@ -61,7 +67,8 @@ class Storage:
 		tx = Transaction(
 			sender_userid = None,
 			receiver_userid = receiver_userid,
-			amount = amount,
+			amountIncoming = amount,
+			amountOutgoing = amount - fee, #receiver pays fee
 			preimage = preimage,
 			timeoutTime = timeoutTime,
 			status = TransactionStatus.waiting_for_sender
@@ -98,9 +105,8 @@ class Storage:
 
 		tx = self.transactions[paymentHash]
 
-		#TODO: take fees
 		assert sender.balance >= amount
-		assert tx.amount == amount
+		assert tx.amountIncoming == amount
 
 		sender.balance -= amount
 		tx.sender_userid = sender_userid
@@ -121,7 +127,6 @@ class Storage:
 
 		assert tx.status == TransactionStatus.waiting_for_receiver
 
-		#TODO: take fees
-		receiver.balance += tx.amount
+		receiver.balance += tx.amountOutgoing
 		tx.status = TransactionStatus.completed
 
