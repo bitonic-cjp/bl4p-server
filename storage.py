@@ -105,6 +105,10 @@ class Storage:
 
 		tx = self.transactions[paymentHash]
 
+		assert tx.status in \
+			TransactionStatus.waiting_for_sender, \
+			TransactionStatus.waiting_for_receiver
+
 		assert sender.balance >= amount
 		assert tx.amountIncoming == amount
 
