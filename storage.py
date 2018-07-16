@@ -11,20 +11,20 @@ sha256 = lambda preimage: hashlib.sha256(preimage).digest()
 
 
 class User(Struct):
-	id = None
-	balance = 0
+	id = None   #int: user ID
+	balance = 0 #int: balance
 
 
 TransactionStatus = Enum(['waiting_for_sender', 'waiting_for_receiver', 'timeout', 'completed'])
 
 class Transaction(Struct):
-	sender_userid = None
-	receiver_userid = None
-	amountIncoming = 0
-	amountOutgoing = 0
-	preimage = None
-	timeoutTime = None
-	status = None
+	sender_userid = None   #int or None: sender user ID
+	receiver_userid = None #int: receiver user id
+	amountIncoming = 0     #int: amount to be taken from sender
+	amountOutgoing = 0     #int: amount to be given to receiver
+	preimage = None        #bytes: payment preimage
+	timeoutTime = None     #float: payment time-out (seconds since UNIX epoch)
+	status = None          #TransactionStatus: status
 
 
 class Storage:
