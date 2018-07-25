@@ -1,3 +1,4 @@
+import decimal
 import sys
 import unittest
 
@@ -148,6 +149,22 @@ class TestStorage(unittest.TestCase):
 			self.storage.processReceiverClaim(paymentPreimage)
 
 		self.assertEqual(self.getBalance(self.receiverID), 299)
+
+
+	def test_feeAmounts(self):
+		self.storage.fee_base = 1
+		self.storage.fee_rate = decimal.Decimal('0.0025')
+
+		for amount in [2, 10, 1000, 10000]:
+			expectedFee = 1 + (25*amount) // 10000
+
+			senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=amount, timeDelta=5, receiverPaysFee=True)
+			self.assertEqual(senderAmount,  amount)
+			self.assertEqual(receiverAmount, amount - expectedFee)
+
+			senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=amount, timeDelta=5, receiverPaysFee=False)
+			self.assertEqual(senderAmount,  amount + expectedFee)
+			self.assertEqual(receiverAmount, amount)
 
 
 
