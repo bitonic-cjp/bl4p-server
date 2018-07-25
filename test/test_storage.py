@@ -75,12 +75,12 @@ class TestStorage(unittest.TestCase):
 
 	#TODO: time-out scenarios
 
-	def test_startTransaction_invalidUser(self):
+	def test_startTransaction_UserNotFound(self):
 		with self.assertRaises(storage.Storage.UserNotFound):
 			self.storage.startTransaction(1312, amount=100, timeDelta=5, receiverPaysFee=True)
 
 
-	def test_startTransaction_insufficientAmount(self):
+	def test_startTransaction_InsufficientAmount(self):
 		self.storage.fee_base = 1
 		self.storage.fee_rate = 0
 
@@ -122,13 +122,13 @@ class TestStorage(unittest.TestCase):
 		self.assertEqual(statusBefore, statusAfter)
 
 
-	def test_processSenderAck_invalidUser(self):
+	def test_processSenderAck_UserNotFound(self):
 		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
 		with self.assertRaises(storage.Storage.UserNotFound):
 			self.storage.processSenderAck(1312, amount=senderAmount, paymentHash=paymentHash)
 
 
-	def test_processSenderAck_invalidPaymentHash(self):
+	def test_processSenderAck_TransactionNotFound(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
 
@@ -147,7 +147,7 @@ class TestStorage(unittest.TestCase):
 			self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 
 
-	def test_processSenderAck_insufficientFunds(self):
+	def test_processSenderAck_InsufficientFunds(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
 
@@ -163,7 +163,7 @@ class TestStorage(unittest.TestCase):
 		self.assertEqual(self.getBalance(self.senderID), 0)
 
 
-	def test_processReceiverClaim_invalidPaymentHash(self):
+	def test_processReceiverClaim_TransactionNotFound(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
 
