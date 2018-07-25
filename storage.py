@@ -175,7 +175,7 @@ class Storage:
 		:returns: the payment preimage
 
 		:raises UserNotFound: No user was found with this ID
-		:raises TransactionNotFound: No transaction was found for this payment hash
+		:raises TransactionNotFound: No transaction was found for this payment hash and amount
 		:raises InsufficientFunds: The sender has insufficient funds to pay the given amount
 		'''
 
@@ -186,11 +186,11 @@ class Storage:
 			TransactionStatus.waiting_for_sender,
 			TransactionStatus.waiting_for_receiver
 			])
+		if tx.amountIncoming != amount:
+			raise Storage.TransactionNotFound()
 
 		if sender.balance < amount:
 			raise Storage.InsufficientFunds()
-
-		assert tx.amountIncoming == amount
 
 		sender.balance -= amount
 		tx.sender_userid = sender_userid

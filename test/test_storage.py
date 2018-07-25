@@ -146,6 +146,10 @@ class TestStorage(unittest.TestCase):
 		with self.assertRaises(storage.Storage.TransactionNotFound):
 			self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 
+		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		with self.assertRaises(storage.Storage.TransactionNotFound):
+			self.storage.processSenderAck(self.senderID, amount=senderAmount+1, paymentHash=paymentHash)
+
 
 	def test_processSenderAck_InsufficientFunds(self):
 		self.setBalance(self.senderID, 500)
