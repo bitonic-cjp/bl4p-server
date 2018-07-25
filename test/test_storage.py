@@ -80,6 +80,23 @@ class TestStorage(unittest.TestCase):
 			self.storage.startTransaction(1312, amount=100, timeDelta=5, receiverPaysFee=True)
 
 
+	def test_startTransaction_insufficientAmount(self):
+		self.storage.fee_base = 1
+		self.storage.fee_rate = 0
+
+		for amount in [-1, 0, 1]:
+			with self.assertRaises(storage.Storage.InsufficientAmount):
+				self.storage.startTransaction(self.receiverID, amount=amount, timeDelta=5, receiverPaysFee=True)
+
+		self.storage.startTransaction(self.receiverID, amount=2, timeDelta=5, receiverPaysFee=True)
+
+		for amount in [-1, 0]:
+			with self.assertRaises(storage.Storage.InsufficientAmount):
+				self.storage.startTransaction(self.receiverID, amount=amount, timeDelta=5, receiverPaysFee=False)
+
+		self.storage.startTransaction(self.receiverID, amount=1, timeDelta=5, receiverPaysFee=False)
+
+
 	def test_processTimeout_NOPs(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
