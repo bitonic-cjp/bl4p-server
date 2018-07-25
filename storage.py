@@ -124,7 +124,7 @@ class Storage:
 			amountOutgoing = amount
 
 		if amountOutgoing <= 0:
-			raise InsufficientAmount()
+			raise Storage.InsufficientAmount()
 
 		preimage = os.urandom(32) #TODO: HD wallet instead?
 		paymentHash = sha256(preimage)
