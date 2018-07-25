@@ -1,3 +1,4 @@
+import decimal
 import hashlib
 import os
 import time
@@ -42,9 +43,16 @@ class Storage:
 		pass
 
 
+	class InsufficientAmount(Exception):
+		pass
+
+
 	def __init__(self):
 		self.users = {}
 		self.transactions = {}
+
+		self.fee_rate = decimal.Decimal('0.0025')
+		self.fee_base = 1
 
 
 	def getUser(self, userid):
@@ -89,15 +97,16 @@ class Storage:
 		return ret
 
 
-	def startTransaction(self, receiver_userid, amount, timeDelta):
+	def startTransaction(self, receiver_userid, amount, timeDelta, receiverPaysFee):
 		'''
 		Start a new transaction.
 
 		:param receiver_userid: the user ID of the receiver
 		:param amount: the amount to be transfered from sender to receiver
 		:param timeDelta: the maximum time for the sender to respond, in seconds
+		:param receiverPaysFee: indicates whether receiver or sender pays the fee
 
-		:returns: the payment hash
+		:returns: tuple (sender amount, payment hash)
 
 		:raises UserNotFound: No user was found with this ID
 		'''
@@ -105,10 +114,17 @@ class Storage:
 		#Just check that the user exists
 		self.getUser(receiver_userid)
 
-		fee = 0 #TODO
+		fee = int(self.fee_base + self.fee_rate * amount)
 
-		assert amount > 0
-		assert amount - fee > 0
+		if receiverPaysFee:
+			amountIncoming = amount
+			amountOutgoing = amount - fee
+		else:
+			amountIncoming = amount + fee
+			amountOutgoing = amount
+
+		if amountOutgoing <= 0:
+			raise InsufficientAmount()
 
 		preimage = os.urandom(32) #TODO: HD wallet instead?
 		paymentHash = sha256(preimage)
@@ -117,14 +133,14 @@ class Storage:
 		tx = Transaction(
 			sender_userid = None,
 			receiver_userid = receiver_userid,
-			amountIncoming = amount,
-			amountOutgoing = amount - fee, #receiver pays fee
+			amountIncoming = amountIncoming,
+			amountOutgoing = amountOutgoing,
 			preimage = preimage,
 			timeoutTime = timeoutTime,
 			status = TransactionStatus.waiting_for_sender
 			)
 		self.transactions[paymentHash] = tx
-		return paymentHash
+		return amountIncoming, paymentHash
 
 
 	def processTimeout(self, paymentHash):

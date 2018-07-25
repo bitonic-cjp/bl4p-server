@@ -12,6 +12,8 @@ class TestStorage(unittest.TestCase):
 		self.receiverID = 3
 		self.senderID = 6
 		self.storage = storage.Storage()
+		self.storage.fee_base = 1
+		self.storage.fee_rate = 0
 		self.storage.users[self.senderID] = storage.User(id=self.senderID, balance=0)
 		self.storage.users[self.receiverID] = storage.User(id=self.receiverID, balance=0)
 
@@ -32,21 +34,36 @@ class TestStorage(unittest.TestCase):
 		self.setBalance(self.receiverID, 200)
 
 		#Receiver:
-		paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5)
+		senderAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		self.assertEqual(senderAmount, 100) #not including fee
 
 		#Sender:
-		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=100, paymentHash=paymentHash)
+		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 
 		#Receiver:
 		self.storage.processReceiverClaim(paymentPreimage)
 
 		self.assertEqual(self.getBalance(self.senderID), 400)
-		self.assertEqual(self.getBalance(self.receiverID), 300)
+		self.assertEqual(self.getBalance(self.receiverID), 299)
 
+		#Receiver:
+		senderAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=False)
+		self.assertEqual(senderAmount, 101) #including fee
+
+		#Sender:
+		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
+
+		#Receiver:
+		self.storage.processReceiverClaim(paymentPreimage)
+
+		self.assertEqual(self.getBalance(self.senderID), 299)
+		self.assertEqual(self.getBalance(self.receiverID), 399)
+
+	#TODO: time-out scenarios
 
 	def test_startTransaction_invalidUser(self):
 		with self.assertRaises(storage.Storage.UserNotFound):
-			self.storage.startTransaction(1312, amount=100, timeDelta=5)
+			self.storage.startTransaction(1312, amount=100, timeDelta=5, receiverPaysFee=True)
 
 
 	def test_processTimeout_NOPs(self):
@@ -58,8 +75,8 @@ class TestStorage(unittest.TestCase):
 
 		#Now test it in states where it should be a NOP too
 
-		paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5)
-		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=100, paymentHash=paymentHash)
+		senderAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 
 		statusBefore = self.getTransactionStatus(paymentHash)
 		self.storage.processTimeout(paymentHash)
@@ -75,9 +92,9 @@ class TestStorage(unittest.TestCase):
 
 
 	def test_processSenderAck_invalidUser(self):
-		paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5)
+		senderAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
 		with self.assertRaises(storage.Storage.UserNotFound):
-			self.storage.processSenderAck(1312, amount=100, paymentHash=paymentHash)
+			self.storage.processSenderAck(1312, amount=senderAmount, paymentHash=paymentHash)
 
 
 	def test_processSenderAck_invalidPaymentHash(self):
@@ -87,16 +104,16 @@ class TestStorage(unittest.TestCase):
 		with self.assertRaises(storage.Storage.TransactionNotFound):
 			self.storage.processSenderAck(self.senderID, amount=100, paymentHash=b'x'*32)
 
-		paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5)
+		senderAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
 		self.storage.processTimeout(paymentHash)
 		with self.assertRaises(storage.Storage.TransactionNotFound):
-			self.storage.processSenderAck(self.senderID, amount=100, paymentHash=paymentHash)
+			self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 
-		paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5)
-		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=100, paymentHash=paymentHash)
+		senderAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 		self.storage.processReceiverClaim(paymentPreimage)
 		with self.assertRaises(storage.Storage.TransactionNotFound):
-			self.storage.processSenderAck(self.senderID, amount=100, paymentHash=paymentHash)
+			self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 
 
 	def test_processReceiverClaim_invalidPaymentHash(self):
@@ -106,12 +123,12 @@ class TestStorage(unittest.TestCase):
 		with self.assertRaises(storage.Storage.TransactionNotFound):
 			self.storage.processReceiverClaim(b'x'*32)
 
-		paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5)
+		senderAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
 		paymentPreimage = self.storage.transactions[paymentHash].preimage
 		with self.assertRaises(storage.Storage.TransactionNotFound):
 			self.storage.processReceiverClaim(paymentPreimage)
 
-		paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5)
+		senderAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
 		paymentPreimage = self.storage.transactions[paymentHash].preimage
 		self.storage.processTimeout(paymentHash)
 		with self.assertRaises(storage.Storage.TransactionNotFound):
@@ -119,16 +136,16 @@ class TestStorage(unittest.TestCase):
 
 		self.assertEqual(self.getBalance(self.receiverID), 200)
 
-		paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5)
-		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=100, paymentHash=paymentHash)
+		senderAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 		self.storage.processReceiverClaim(paymentPreimage)
 
-		self.assertEqual(self.getBalance(self.receiverID), 300)
+		self.assertEqual(self.getBalance(self.receiverID), 299)
 
 		with self.assertRaises(storage.Storage.TransactionNotFound):
 			self.storage.processReceiverClaim(paymentPreimage)
 
-		self.assertEqual(self.getBalance(self.receiverID), 300)
+		self.assertEqual(self.getBalance(self.receiverID), 299)
 
 
 
