@@ -47,6 +47,10 @@ class Storage:
 		pass
 
 
+	class InsufficientFunds(Exception):
+		pass
+
+
 	def __init__(self):
 		self.users = {}
 		self.transactions = {}
@@ -109,6 +113,7 @@ class Storage:
 		:returns: tuple (sender amount, receiver amount, payment hash)
 
 		:raises UserNotFound: No user was found with this ID
+		:raises InsufficientAmount: The amount is non-positive (maybe after subtraction of fees)
 		'''
 
 		#Just check that the user exists
@@ -171,6 +176,7 @@ class Storage:
 
 		:raises UserNotFound: No user was found with this ID
 		:raises TransactionNotFound: No transaction was found for this payment hash
+		:raises InsufficientFunds: The sender has insufficient funds to pay the given amount
 		'''
 
 		sender = self.getUser(sender_userid)
@@ -181,7 +187,9 @@ class Storage:
 			TransactionStatus.waiting_for_receiver
 			])
 
-		assert sender.balance >= amount
+		if sender.balance < amount:
+			raise Storage.InsufficientFunds()
+
 		assert tx.amountIncoming == amount
 
 		sender.balance -= amount

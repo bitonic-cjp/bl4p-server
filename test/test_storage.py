@@ -147,6 +147,22 @@ class TestStorage(unittest.TestCase):
 			self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 
 
+	def test_processSenderAck_insufficientFunds(self):
+		self.setBalance(self.senderID, 500)
+		self.setBalance(self.receiverID, 200)
+
+		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=501, timeDelta=5, receiverPaysFee=True)
+		self.assertEqual(senderAmount, 501)
+		with self.assertRaises(storage.Storage.InsufficientFunds):
+			self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
+			self.assertEqual(self.getBalance(self.senderID), 500)
+
+		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=500, timeDelta=5, receiverPaysFee=True)
+		self.assertEqual(senderAmount, 500)
+		self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
+		self.assertEqual(self.getBalance(self.senderID), 0)
+
+
 	def test_processReceiverClaim_invalidPaymentHash(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
