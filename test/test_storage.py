@@ -30,7 +30,7 @@ class TestStorage(unittest.TestCase):
 		return self.storage.transactions[paymentHash].status
 
 
-	def test_goodFlow(self):
+	def test_goodFlow_receiverPaysFee(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
 
@@ -38,29 +38,40 @@ class TestStorage(unittest.TestCase):
 		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
 		self.assertEqual(senderAmount,  100) #not affected by fee
 		self.assertEqual(receiverAmount, 99) #fee subtracted
+		self.assertEqual(self.getBalance(self.senderID), 500)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
 
 		#Sender:
 		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
+		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
 
 		#Receiver:
 		self.storage.processReceiverClaim(paymentPreimage)
+		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
+		self.assertEqual(self.getBalance(self.receiverID), 200 + receiverAmount)
 
-		self.assertEqual(self.getBalance(self.senderID), 400)
-		self.assertEqual(self.getBalance(self.receiverID), 299)
+
+	def test_goodFlow_senderPaysFee(self):
+		self.setBalance(self.senderID, 500)
+		self.setBalance(self.receiverID, 200)
 
 		#Receiver:
 		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=False)
 		self.assertEqual(senderAmount,   101) #fee added
 		self.assertEqual(receiverAmount, 100) #not affected by fee
+		self.assertEqual(self.getBalance(self.senderID), 500)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
 
 		#Sender:
 		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
+		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
 
 		#Receiver:
 		self.storage.processReceiverClaim(paymentPreimage)
-
-		self.assertEqual(self.getBalance(self.senderID), 299)
-		self.assertEqual(self.getBalance(self.receiverID), 399)
+		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
+		self.assertEqual(self.getBalance(self.receiverID), 200 + receiverAmount)
 
 	#TODO: time-out scenarios
 
@@ -143,12 +154,12 @@ class TestStorage(unittest.TestCase):
 		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 		self.storage.processReceiverClaim(paymentPreimage)
 
-		self.assertEqual(self.getBalance(self.receiverID), 299)
+		self.assertEqual(self.getBalance(self.receiverID), 200 + receiverAmount)
 
 		with self.assertRaises(storage.Storage.TransactionNotFound):
 			self.storage.processReceiverClaim(paymentPreimage)
 
-		self.assertEqual(self.getBalance(self.receiverID), 299)
+		self.assertEqual(self.getBalance(self.receiverID), 200 + receiverAmount)
 
 
 	def test_feeAmounts(self):
