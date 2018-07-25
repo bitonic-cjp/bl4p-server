@@ -106,7 +106,7 @@ class Storage:
 		:param timeDelta: the maximum time for the sender to respond, in seconds
 		:param receiverPaysFee: indicates whether receiver or sender pays the fee
 
-		:returns: tuple (sender amount, payment hash)
+		:returns: tuple (sender amount, receiver amount, payment hash)
 
 		:raises UserNotFound: No user was found with this ID
 		'''
@@ -140,7 +140,7 @@ class Storage:
 			status = TransactionStatus.waiting_for_sender
 			)
 		self.transactions[paymentHash] = tx
-		return amountIncoming, paymentHash
+		return amountIncoming, amountOutgoing, paymentHash
 
 
 	def processTimeout(self, paymentHash):
