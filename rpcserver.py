@@ -1,6 +1,8 @@
+import cgi
 import http.server
 import json
 import socketserver
+import urllib.parse
 
 
 
@@ -23,11 +25,56 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 
 
 	def do_GET(self):
+		methods = \
+		[
+		('start', ['userid', 'amount']),
+		('send', ['userid'])
+		]
+
+		forms = \
+		[
+		'<h3>%s</h3>' % name + \
+		'<form name="post" action="%s" method="post"><table>\n<tr>' % name + \
+		'</tr>\n<tr>'.join([
+			'<td>%s</td><td><input name="%s" size="64"></td>' % (a,a)
+			for a in args
+			]) + \
+		'</tr>\n</table>\n'
+		'<input type="submit">'
+		'</form>'
+		for name, args in methods
+		]
+
+		s = '<html><body>\n' + '<hr>\n'.join(forms) + '\n</body></html>'
+		
+		self.do_HEAD(mime='text/html')
+		self.wfile.write(s.encode())
+
+
+	def do_POST(self):
 		try:
 			path = self.path.split('/')[1:]
 			if len(path) != 1:
 				raise RPCException(404, 'Not found: ' + self.path)
 			methodName = path[-1]
+
+			ctype, pdict = cgi.parse_header(self.headers['content-type'])
+			if ctype == 'multipart/form-data':
+				postvars = cgi.parse_multipart(self.rfile, pdict)
+			elif ctype == 'application/x-www-form-urlencoded':
+				length = int(self.headers['content-length'])
+				postvars = urllib.parse.parse_qs(
+					self.rfile.read(length),
+					keep_blank_values=1)
+			else:
+				postvars = {}
+
+			postvars = \
+			{
+			k.decode(): v[0].decode()
+			for k, v in postvars.items()
+			}
+
 			try:
 				ret = \
 				{
@@ -35,7 +82,7 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 				'send':      self.rpc_send,
 				'receive':   self.rpc_receive,
 				'getstatus': self.rpc_getstatus,
-				}[methodName]()
+				}[methodName](postvars)
 			except KeyError:
 				raise RPCException(404, 'Not found: ' + self.path)
 		except RPCException as e:
@@ -43,20 +90,20 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 			self.wfile.write(str(e).encode())
 
 
-	def rpc_start(self):
-		self.writeResult(0)
+	def rpc_start(self, args):
+		self.writeResult(args)
 
 
-	def rpc_send(self):
-		self.writeResult(1)
+	def rpc_send(self, args):
+		self.writeResult(args)
 
 
-	def rpc_receive(self):
-		self.writeResult(2)
+	def rpc_receive(self, args):
+		self.writeResult(args)
 
 
-	def rpc_getstatus(self):
-		self.writeResult(3)
+	def rpc_getstatus(self, args):
+		self.writeResult(args)
 
 
 	def writeResult(self, data, success=True):
