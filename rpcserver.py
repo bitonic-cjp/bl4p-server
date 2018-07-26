@@ -1,3 +1,4 @@
+import binascii
 import cgi
 import http.server
 import json
@@ -104,8 +105,12 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 					timeDelta=timeDelta,
 					receiverPaysFee=receiverPaysFee
 					)
-
-			self.writeResult(args)
+			paymentHash = binascii.hexlify(paymentHash).decode()
+			self.writeResult({
+				'senderamount': senderAmount,
+				'receiveramount': receiverAmount,
+				'paymenthash': paymentHash
+				})
 		except storage.UserNotFound:
 			self.writeResult('User not found', success=False)
 		except storage.InsufficientAmount:
