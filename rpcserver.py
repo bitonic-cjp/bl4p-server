@@ -27,7 +27,7 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 	def do_GET(self):
 		methods = \
 		[
-		('start', ['userid', 'amount']),
+		('start', ['userid', 'amount', 'timedelta', 'receiverpaysfee']),
 		('send', ['userid'])
 		]
 
@@ -91,7 +91,25 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 
 
 	def rpc_start(self, args):
-		self.writeResult(args)
+		argsDef = (('userid', int), ('amount', int), ('timedelta', int), ('receiverpaysfee', bool))
+		userid, amount, timeDelta, receiverPaysFee = self.readArgs(args, argsDef)
+
+		storage = self.server.storage
+
+		try:
+			senderAmount, receiverAmount, paymentHash = \
+				storage.startTransaction(
+					receiver_userid=userid,
+					amount=amount,
+					timeDelta=timeDelta,
+					receiverPaysFee=receiverPaysFee
+					)
+
+			self.writeResult(args)
+		except storage.UserNotFound:
+			self.writeResult('User not found', success=False)
+		except storage.InsufficientAmount:
+			self.writeResult('Insufficient amount (must be positive after subtraction of fees)', success=False)
 
 
 	def rpc_send(self, args):
@@ -106,6 +124,20 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 		self.writeResult(args)
 
 
+	def readArgs(self, args, argsDef):
+		ret = []
+
+		for name, type in argsDef:
+			try:
+				ret.append(type(args[name]))
+			except KeyError:
+				raise RPCException(400, 'Missing parameter %s' % name)
+			except ValueError:
+				raise RPCException(400, 'Invalid value for parameter %s: %s' % (name, args[name]))
+
+		return ret
+
+
 	def writeResult(self, data, success=True):
 		self.do_HEAD(mime='application/json')
 		self.wfile.write(json.dumps({
@@ -118,4 +150,5 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 class RPCServer(socketserver.TCPServer):
 	def __init__(self, storage):
 		socketserver.TCPServer.__init__(self, ('', PORT), RPCHandler)
+		self.storage = storage
 
