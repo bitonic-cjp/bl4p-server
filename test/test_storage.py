@@ -172,6 +172,23 @@ class TestStorage(unittest.TestCase):
 		self.assertEqual(self.getBalance(self.senderID), 0)
 
 
+	def test_processSenderAck_multipleCalls(self):
+		self.setBalance(self.senderID, 500)
+		self.setBalance(self.receiverID, 200)
+
+		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		paymentPreimage1 = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
+		self.assertEqual(self.getBalance(self.senderID), 400)
+
+		paymentPreimage2 = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
+		self.assertEqual(paymentPreimage1, paymentPreimage2)
+		self.assertEqual(self.getBalance(self.senderID), 400)
+
+		with self.assertRaises(storage.Storage.TransactionNotFound):
+			self.storage.processSenderAck(self.receiverID, amount=senderAmount, paymentHash=paymentHash)
+			self.assertEqual(self.getBalance(self.senderID), 400)
+
+
 	def test_processReceiverClaim_TransactionNotFound(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)

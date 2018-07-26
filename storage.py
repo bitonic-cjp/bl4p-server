@@ -197,6 +197,18 @@ class Storage:
 		if tx.amountIncoming != amount:
 			raise Storage.TransactionNotFound()
 
+		#In case of waiting_for_receiver, only send back data:
+		#This is the 2nd, 3d etc. call
+		if tx.status == TransactionStatus.waiting_for_receiver:
+			#First check if it's really the correct user:
+			if tx.sender_userid != sender_userid:
+				raise Storage.TransactionNotFound()
+
+			#We're clear:
+			return tx.preimage
+
+		#Otherwise (waiting_for_sender), take funds from the sender:
+		#This is the 1st call
 		if sender.balance < amount:
 			raise Storage.InsufficientFunds()
 
