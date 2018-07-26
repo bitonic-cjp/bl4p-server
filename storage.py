@@ -47,6 +47,10 @@ class Storage:
 		pass
 
 
+	class InvalidTimeDelta(Exception):
+		pass
+
+
 	class InsufficientFunds(Exception):
 		pass
 
@@ -114,6 +118,7 @@ class Storage:
 
 		:raises UserNotFound: No user was found with this ID
 		:raises InsufficientAmount: The amount is non-positive (maybe after subtraction of fees)
+		:raises InvalidTimeDelta: The time-delta is non-positive
 		'''
 
 		#Just check that the user exists
@@ -130,6 +135,9 @@ class Storage:
 
 		if amountOutgoing <= 0:
 			raise Storage.InsufficientAmount()
+
+		if timeDelta <= 0.0:
+			raise Storage.InvalidTimeDelta()
 
 		preimage = os.urandom(32) #TODO: HD wallet instead?
 		paymentHash = sha256(preimage)

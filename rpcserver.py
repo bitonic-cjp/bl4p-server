@@ -91,7 +91,7 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 
 
 	def rpc_start(self, args):
-		argsDef = (('userid', int), ('amount', int), ('timedelta', int), ('receiverpaysfee', bool))
+		argsDef = (('userid', int), ('amount', int), ('timedelta', float), ('receiverpaysfee', bool))
 		userid, amount, timeDelta, receiverPaysFee = self.readArgs(args, argsDef)
 
 		storage = self.server.storage
@@ -110,6 +110,8 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 			self.writeResult('User not found', success=False)
 		except storage.InsufficientAmount:
 			self.writeResult('Insufficient amount (must be positive after subtraction of fees)', success=False)
+		except storage.InvalidTimeDelta:
+			self.writeResult('Invalid (non-positive) timedelta', success=False)
 
 
 	def rpc_send(self, args):

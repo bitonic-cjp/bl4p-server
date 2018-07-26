@@ -97,6 +97,11 @@ class TestStorage(unittest.TestCase):
 		self.storage.startTransaction(self.receiverID, amount=1, timeDelta=5, receiverPaysFee=False)
 
 
+	def test_startTransaction_InvalidTimeDelta(self):
+		with self.assertRaises(storage.Storage.InvalidTimeDelta):
+			self.storage.startTransaction(self.receiverID, amount=100, timeDelta=-0.1, receiverPaysFee=True)
+
+
 	def test_processTimeout_NOPs(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
