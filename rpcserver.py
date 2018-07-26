@@ -29,7 +29,7 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 		methods = \
 		[
 		('start', ['userid', 'amount', 'timedelta', 'receiverpaysfee']),
-		('send', ['userid'])
+		('send', ['userid', 'amount', 'paymenthash'])
 		]
 
 		forms = \
@@ -120,7 +120,34 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 
 
 	def rpc_send(self, args):
-		self.writeResult(args)
+		argsDef = (('userid', int), ('amount', int), ('paymenthash', str))
+		userid, amount, paymentHash = self.readArgs(args, argsDef)
+
+		storage = self.server.storage
+
+		try:
+			paymentHash = binascii.unhexlify(paymentHash.encode())
+		except:
+			self.writeResult('Invalid payment hash (failed to decode as hex string)', success=False)
+			return
+
+		try:
+			paymentPreimage = \
+				storage.processSenderAck(
+					sender_userid=userid,
+					amount=amount,
+					paymentHash=paymentHash
+					)
+			paymentPreimage = binascii.hexlify(paymentPreimage).decode()
+			self.writeResult({
+				'paymentpreimage': paymentPreimage
+				})
+		except storage.UserNotFound:
+			self.writeResult('User not found', success=False)
+		except storage.TransactionNotFound:
+			self.writeResult('Transaction not found (incorrect amount or payment hash)', success=False)
+		except storage.InsufficientFunds:
+			self.writeResult('Insufficient funds', success=False)
 
 
 	def rpc_receive(self, args):
