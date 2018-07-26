@@ -6,18 +6,20 @@ receiverID = 3
 senderID = 6
 
 s = storage.Storage()
-s.users[receiverID] = storage.User(id=receiverID, balance=200)
-s.users[senderID] = storage.User(id=senderID, balance=500)
+s.users[receiverID] = storage.User(id=receiverID, balance=2000)
+s.users[senderID] = storage.User(id=senderID, balance=5000)
 
 print('Before:')
 print(s.users[senderID].balance)
 print(s.users[receiverID].balance)
 
 #Receiver:
-paymentHash = s.startTransaction(receiverID, amount=100, timeDelta=5)
+senderAmount, receiverAmount, paymentHash = s.startTransaction(
+	receiverID, amount=1000, timeDelta=5, receiverPaysFee=True)
 
 #Sender:
-paymentPreimage = s.processSenderAck(senderID, amount=100, paymentHash=paymentHash)
+paymentPreimage = s.processSenderAck(
+	senderID, amount=senderAmount, paymentHash=paymentHash)
 
 #Receiver:
 s.processReceiverClaim(paymentPreimage)
