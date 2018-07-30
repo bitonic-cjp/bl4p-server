@@ -69,7 +69,14 @@ def receive(storage, paymentpreimage):
 		return 'Transaction not found (incorrect preimage)', False
 
 
-def getstatus(storage):
+def getstatus(storage, userid, paymenthash):
+	try:
+		paymenthash = binascii.unhexlify(paymenthash.encode())
+	except Exception as e:
+		print(e)
+		return 'Invalid payment hash (failed to decode as hex string)', False
+		return
+
 	return {
 		}, True
 
@@ -86,7 +93,7 @@ def registerRPC(RPCServer, storage):
 	'start':     (start    , (('userid', int), ('amount', int), ('timedelta', float), ('receiverpaysfee', bool))),
 	'send':      (send     , (('userid', int), ('amount', int), ('paymenthash', str))),
 	'receive':   (receive  , (('paymentpreimage', str), )),
-	'getstatus': (getstatus, tuple()),
+	'getstatus': (getstatus, (('userid', int), ('paymenthash', str))),
 	}
 
 	for name, data in functionData.items():
