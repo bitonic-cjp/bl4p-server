@@ -201,6 +201,14 @@ class Storage:
 		#This is the 2nd, 3d etc. call
 		if tx.status == TransactionStatus.waiting_for_receiver:
 			#First check if it's really the correct user:
+			#This is important:
+			#in case the sender manages to call this function a
+			#first time but fails to get the preimage back,
+			#and his incoming transaction times out,
+			#the transaction must stay in limbo to give the sender
+			#a chance to negotiate another payment for the funds.
+			#For this, it is necessary the preimage stays a secret
+			#between us and the sender.
 			if tx.sender_userid != sender_userid:
 				raise Storage.TransactionNotFound()
 
@@ -226,6 +234,17 @@ class Storage:
 
 		:raises TransactionNotFound: No transaction was found for this preimage
 		'''
+
+		#It's actually not that important who hands over the
+		#receiver claim. The fact that *someone* hands it over to us
+		#is proof that someone received the preimage and wants the
+		#transaction to get out of limbo.
+		#Since we only send the preimage to the sender, 
+		#and the sender has an interest to keep the transaction in limbo
+		#until its incoming funds are guaranteed,
+		#this proves that the sender has its incoming funds guaranteed.
+		#it's up to the sender to keep the preimage secret in other cases.
+		#That's all we need to know.
 
 		paymentHash = sha256(preimage)
 		tx = self.getTransaction(paymentHash, [TransactionStatus.waiting_for_receiver])
