@@ -14,14 +14,14 @@ def start(storage, userid, amount, timedelta, receiverpaysfee):
 			'senderamount': senderAmount,
 			'receiveramount': receiverAmount,
 			'paymenthash': paymentHash
-			}, True
+			}
 
 	except storage.UserNotFound:
-		return 'User not found', False
+		raise Exception('User not found')
 	except storage.InsufficientAmount:
-		return 'Insufficient amount (must be positive after subtraction of fees)', False
+		raise Exception('Insufficient amount (must be positive after subtraction of fees)')
 	except storage.InvalidTimeDelta:
-		return 'Invalid (non-positive) timedelta', False
+		raise Exception('Invalid (non-positive) timedelta')
 
 
 def send(storage, userid, amount, paymenthash):
@@ -29,8 +29,7 @@ def send(storage, userid, amount, paymenthash):
 		paymenthash = binascii.unhexlify(paymenthash.encode())
 	except Exception as e:
 		print(e)
-		return 'Invalid payment hash (failed to decode as hex string)', False
-		return
+		raise Exception('Invalid payment hash (failed to decode as hex string)')
 
 	try:
 		paymentPreimage = \
@@ -42,14 +41,14 @@ def send(storage, userid, amount, paymenthash):
 		paymentPreimage = binascii.hexlify(paymentPreimage).decode()
 		return {
 			'paymentpreimage': paymentPreimage
-			}, True
+			}
 
 	except storage.UserNotFound:
-		return 'User not found', False
+		raise Exception('User not found')
 	except storage.TransactionNotFound:
-		return 'Transaction not found (incorrect amount or payment hash)', False
+		raise Exception('Transaction not found (incorrect amount or payment hash)')
 	except storage.InsufficientFunds:
-		return 'Insufficient funds', False
+		raise Exception('Insufficient funds')
 
 
 def receive(storage, paymentpreimage):
@@ -57,16 +56,15 @@ def receive(storage, paymentpreimage):
 		paymentpreimage = binascii.unhexlify(paymentpreimage.encode())
 	except Exception as e:
 		print(e)
-		return 'Invalid payment preimage (failed to decode as hex string)', False
-		return
+		raise Exception('Invalid payment preimage (failed to decode as hex string)')
 
 	try:
 		storage.processReceiverClaim(paymentpreimage)
 		return {
-			}, True
+			}
 
 	except storage.TransactionNotFound:
-		return 'Transaction not found (incorrect preimage)', False
+		raise Exception('Transaction not found (incorrect preimage)')
 
 
 def getstatus(storage, userid, paymenthash):
@@ -74,11 +72,10 @@ def getstatus(storage, userid, paymenthash):
 		paymenthash = binascii.unhexlify(paymenthash.encode())
 	except Exception as e:
 		print(e)
-		return 'Invalid payment hash (failed to decode as hex string)', False
-		return
+		raise Exception('Invalid payment hash (failed to decode as hex string)')
 
 	return {
-		}, True
+		}
 
 
 def makeClosure(function, firstArg):

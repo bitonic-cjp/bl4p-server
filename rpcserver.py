@@ -94,7 +94,10 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 				except ValueError:
 					raise RPCException(400, 'Invalid value for parameter %s: %s' % (name, postvars[name]))
 
-			data, success = function(**args)
+			try:
+				data, success = function(**args), True
+			except Exception as e:
+				data, success = str(e), False
 
 			self.do_HEAD(mime='application/json')
 			self.wfile.write(json.dumps({
@@ -124,7 +127,7 @@ class RPCServer(socketserver.TCPServer):
 		Registers an RPC function.
 
 		:param name: the RPC name of the function.
-		:param function: the function. Must return (data, bool success).
+		:param function: the function. May raise Exception.
 		:param argsDef: definition of the arguments. Each element must be (name, type).
 		'''
 
