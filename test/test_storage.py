@@ -40,16 +40,21 @@ class TestStorage(unittest.TestCase):
 		self.assertEqual(receiverAmount, 99) #fee subtracted
 		self.assertEqual(self.getBalance(self.senderID), 500)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_sender')
 
 		#Sender:
 		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_receiver')
+		self.assertEqual(self.storage.getTransactionStatus(self.senderID, paymentHash), 'waiting_for_receiver')
 
 		#Receiver:
 		self.storage.processReceiverClaim(paymentPreimage)
 		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
 		self.assertEqual(self.getBalance(self.receiverID), 200 + receiverAmount)
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash), 'completed')
+		self.assertEqual(self.storage.getTransactionStatus(self.senderID, paymentHash), 'completed')
 
 
 	def test_goodFlow_senderPaysFee(self):
@@ -62,16 +67,22 @@ class TestStorage(unittest.TestCase):
 		self.assertEqual(receiverAmount, 100) #not affected by fee
 		self.assertEqual(self.getBalance(self.senderID), 500)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_sender')
 
 		#Sender:
 		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_receiver')
+		self.assertEqual(self.storage.getTransactionStatus(self.senderID, paymentHash), 'waiting_for_receiver')
 
 		#Receiver:
 		self.storage.processReceiverClaim(paymentPreimage)
 		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
 		self.assertEqual(self.getBalance(self.receiverID), 200 + receiverAmount)
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash), 'completed')
+		self.assertEqual(self.storage.getTransactionStatus(self.senderID, paymentHash), 'completed')
+
 
 	#TODO: time-out scenarios
 
@@ -219,6 +230,21 @@ class TestStorage(unittest.TestCase):
 			self.storage.processReceiverClaim(paymentPreimage)
 
 		self.assertEqual(self.getBalance(self.receiverID), 200 + receiverAmount)
+
+
+	def test_getTransactionStatus_UserNotFound(self):
+		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		with self.assertRaises(storage.Storage.UserNotFound):
+			self.storage.getTransactionStatus(1312, paymentHash=paymentHash)
+
+
+	def test_getTransactionStatus_TransactionNotFound(self):
+		with self.assertRaises(storage.Storage.TransactionNotFound):
+			self.storage.getTransactionStatus(self.receiverID, paymentHash='xxx')
+
+		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		with self.assertRaises(storage.Storage.TransactionNotFound):
+			self.storage.getTransactionStatus(self.senderID, paymentHash=paymentHash)
 
 
 	def test_feeAmounts(self):
