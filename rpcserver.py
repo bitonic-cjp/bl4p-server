@@ -29,7 +29,8 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 		methods = \
 		[
 		('start', ['userid', 'amount', 'timedelta', 'receiverpaysfee']),
-		('send', ['userid', 'amount', 'paymenthash'])
+		('send', ['userid', 'amount', 'paymenthash']),
+		('receive', ['paymentpreimage'])
 		]
 
 		forms = \
@@ -127,7 +128,8 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 
 		try:
 			paymentHash = binascii.unhexlify(paymentHash.encode())
-		except:
+		except Exception as e:
+			print(e)
 			self.writeResult('Invalid payment hash (failed to decode as hex string)', success=False)
 			return
 
@@ -151,7 +153,24 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 
 
 	def rpc_receive(self, args):
-		self.writeResult(args)
+		argsDef = (('paymentpreimage', str), )
+		paymentPreimage = self.readArgs(args, argsDef)[0]
+
+		storage = self.server.storage
+
+		try:
+			paymentPreimage = binascii.unhexlify(paymentPreimage.encode())
+		except Exception as e:
+			print(e)
+			self.writeResult('Invalid payment preimage (failed to decode as hex string)', success=False)
+			return
+
+		try:
+			storage.processReceiverClaim(paymentPreimage)
+			self.writeResult({
+				})
+		except storage.TransactionNotFound:
+			self.writeResult('Transaction not found (incorrect preimage)', success=False)
 
 
 	def rpc_getstatus(self, args):
