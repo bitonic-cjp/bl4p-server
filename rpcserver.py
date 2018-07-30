@@ -110,11 +110,6 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 			self.wfile.write(str(e).encode())
 
 
-	def readArgs(self, args, argsDef):
-
-		return ret
-
-
 
 class RPCServer(socketserver.TCPServer):
 	def __init__(self):
