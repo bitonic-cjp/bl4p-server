@@ -60,8 +60,17 @@ def receive(storage, paymentpreimage):
 
 
 def getstatus(storage, userid, paymenthash):
-	return {
-		}
+	try:
+		status = storage.getTransactionStatus(userid, paymenthash)
+		return {
+			'status': status
+			}
+
+	except storage.UserNotFound:
+		raise Exception('User not found')
+	except storage.TransactionNotFound:
+		raise Exception('Transaction not found (incorrect user id or payment hash)')
+
 
 
 #Argument type constructors:

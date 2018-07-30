@@ -83,7 +83,7 @@ class Storage:
 		return ret
 
 
-	def getTransaction(self, paymentHash, acceptableStates):
+	def getTransaction(self, paymentHash, acceptableStates=None):
 		'''
 		Get the user data structure for a transaction.
 
@@ -99,7 +99,7 @@ class Storage:
 		except KeyError:
 			raise Storage.TransactionNotFound()
 
-		if ret.status not in acceptableStates:
+		if acceptableStates is not None and ret.status not in acceptableStates:
 			raise Storage.TransactionNotFound()
 
 		return ret
@@ -252,4 +252,27 @@ class Storage:
 
 		receiver.balance += tx.amountOutgoing
 		tx.status = TransactionStatus.completed
+
+
+	def getTransactionStatus(self, userid, paymentHash):
+		'''
+		Return transaction status to either sender or receiver.
+
+		:param userid: the user ID of the sender or receiver
+		:param paymentHash: the payment hash
+
+		:returns: the status
+
+		:raises UserNotFound: No user was found with this ID
+		:raises TransactionNotFound: No transaction was found for this payment hash and amount
+		'''
+
+		#Just check that the user exists
+		self.getUser(userid)
+
+		tx = self.getTransaction(paymentHash)
+		if userid not in (tx.sender_userid, tx.receiver_userid):
+			raise Storage.TransactionNotFound()
+
+		return str(tx.status)
 
