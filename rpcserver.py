@@ -120,5 +120,13 @@ class RPCServer(socketserver.TCPServer):
 
 
 	def registerRPCFunction(self, name, function, argsDef):
+		'''
+		Registers an RPC function.
+
+		:param name: the RPC name of the function.
+		:param function: the function. Must return (data, bool success).
+		:param argsDef: definition of the arguments. Each element must be (name, type).
+		'''
+
 		self.RPCFunctions[name] = function, argsDef
 
