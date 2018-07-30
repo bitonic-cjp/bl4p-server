@@ -128,7 +128,7 @@ class RPCServer(socketserver.TCPServer):
 
 		:param name: the RPC name of the function.
 		:param function: the function. May raise Exception.
-		:param argsDef: definition of the arguments. Each element must be (name, type).
+		:param argsDef: definition of the arguments. Each element must be (name, constructor).
 		'''
 
 		self.RPCFunctions[name] = function, argsDef

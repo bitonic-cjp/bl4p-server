@@ -1,5 +1,9 @@
 import binascii
 
+
+
+# RPC functions:
+
 def start(storage, userid, amount, timedelta, receiverpaysfee):
 	try:
 		senderAmount, receiverAmount, paymentHash = \
@@ -26,12 +30,6 @@ def start(storage, userid, amount, timedelta, receiverpaysfee):
 
 def send(storage, userid, amount, paymenthash):
 	try:
-		paymenthash = binascii.unhexlify(paymenthash.encode())
-	except Exception as e:
-		print(e)
-		raise Exception('Invalid payment hash (failed to decode as hex string)')
-
-	try:
 		paymentPreimage = \
 			storage.processSenderAck(
 				sender_userid=userid,
@@ -53,12 +51,6 @@ def send(storage, userid, amount, paymenthash):
 
 def receive(storage, paymentpreimage):
 	try:
-		paymentpreimage = binascii.unhexlify(paymentpreimage.encode())
-	except Exception as e:
-		print(e)
-		raise Exception('Invalid payment preimage (failed to decode as hex string)')
-
-	try:
 		storage.processReceiverClaim(paymentpreimage)
 		return {
 			}
@@ -68,14 +60,26 @@ def receive(storage, paymentpreimage):
 
 
 def getstatus(storage, userid, paymenthash):
-	try:
-		paymenthash = binascii.unhexlify(paymenthash.encode())
-	except Exception as e:
-		print(e)
-		raise Exception('Invalid payment hash (failed to decode as hex string)')
-
 	return {
 		}
+
+
+#Argument type constructors:
+
+def hex2binary(s):
+	try:
+		return binascii.unhexlify(s.encode())
+	except Exception as e:
+		raise ValueError(str(e))
+
+
+def str2bool(s):
+	try:
+		return {'true': True, 'false': False}[s.lower()]
+	except Exception:
+		raise ValueError()
+
+
 
 
 def makeClosure(function, firstArg):
@@ -87,10 +91,10 @@ def makeClosure(function, firstArg):
 def registerRPC(RPCServer, storage):
 	functionData = \
 	{
-	'start':     (start    , (('userid', int), ('amount', int), ('timedelta', float), ('receiverpaysfee', bool))),
-	'send':      (send     , (('userid', int), ('amount', int), ('paymenthash', str))),
-	'receive':   (receive  , (('paymentpreimage', str), )),
-	'getstatus': (getstatus, (('userid', int), ('paymenthash', str))),
+	'start':     (start    , (('userid', int), ('amount', int), ('timedelta', float), ('receiverpaysfee', str2bool))),
+	'send':      (send     , (('userid', int), ('amount', int), ('paymenthash', hex2binary))),
+	'receive':   (receive  , (('paymentpreimage', hex2binary), )),
+	'getstatus': (getstatus, (('userid', int), ('paymenthash', hex2binary))),
 	}
 
 	for name, data in functionData.items():
