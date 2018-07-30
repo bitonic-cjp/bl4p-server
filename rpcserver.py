@@ -1,4 +1,3 @@
-import binascii
 import cgi
 import http.server
 import json
@@ -9,6 +8,7 @@ import urllib.parse
 
 socketserver.TCPServer.allow_reuse_address = True
 PORT = 8000
+
 
 
 class RPCException(Exception):
@@ -28,10 +28,13 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 	def do_GET(self):
 		methods = \
 		[
-		('start', ['userid', 'amount', 'timedelta', 'receiverpaysfee']),
-		('send', ['userid', 'amount', 'paymenthash']),
-		('receive', ['paymentpreimage'])
+		(name, [a[0] for a in functionData[1]])
+		for name, functionData in self.server.RPCFunctions.items()
 		]
+
+		for name, args in methods:
+			args.sort()
+		methods.sort(key=lambda m: m[0])
 
 		forms = \
 		[
@@ -58,7 +61,12 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 			path = self.path.split('/')[1:]
 			if len(path) != 1:
 				raise RPCException(404, 'Not found: ' + self.path)
-			methodName = path[-1]
+			name = path[-1]
+
+			try:
+				function, argsDef = self.server.RPCFunctions[name]
+			except KeyError:
+				raise RPCException(404, 'Not found: ' + self.path)
 
 			ctype, pdict = cgi.parse_header(self.headers['content-type'])
 			if ctype == 'multipart/form-data':
@@ -77,131 +85,40 @@ class RPCHandler(http.server.BaseHTTPRequestHandler):
 			for k, v in postvars.items()
 			}
 
-			try:
-				ret = \
-				{
-				'start':     self.rpc_start,
-				'send':      self.rpc_send,
-				'receive':   self.rpc_receive,
-				'getstatus': self.rpc_getstatus,
-				}[methodName](postvars)
-			except KeyError:
-				raise RPCException(404, 'Not found: ' + self.path)
+			args = {}
+			for name, type in argsDef:
+				try:
+					args[name] = type(postvars[name])
+				except KeyError:
+					raise RPCException(400, 'Missing parameter %s' % name)
+				except ValueError:
+					raise RPCException(400, 'Invalid value for parameter %s: %s' % (name, postvars[name]))
+
+			data, success = function(**args)
+
+			self.do_HEAD(mime='application/json')
+			self.wfile.write(json.dumps({
+				'result': 'success' if success else 'error',
+				'data': data
+				}).encode())
+
 		except RPCException as e:
 			self.do_HEAD(response=e.code)
 			self.wfile.write(str(e).encode())
 
 
-	def rpc_start(self, args):
-		argsDef = (('userid', int), ('amount', int), ('timedelta', float), ('receiverpaysfee', bool))
-		userid, amount, timeDelta, receiverPaysFee = self.readArgs(args, argsDef)
-
-		storage = self.server.storage
-
-		try:
-			senderAmount, receiverAmount, paymentHash = \
-				storage.startTransaction(
-					receiver_userid=userid,
-					amount=amount,
-					timeDelta=timeDelta,
-					receiverPaysFee=receiverPaysFee
-					)
-			paymentHash = binascii.hexlify(paymentHash).decode()
-			self.writeResult({
-				'senderamount': senderAmount,
-				'receiveramount': receiverAmount,
-				'paymenthash': paymentHash
-				})
-		except storage.UserNotFound:
-			self.writeResult('User not found', success=False)
-		except storage.InsufficientAmount:
-			self.writeResult('Insufficient amount (must be positive after subtraction of fees)', success=False)
-		except storage.InvalidTimeDelta:
-			self.writeResult('Invalid (non-positive) timedelta', success=False)
-
-
-	def rpc_send(self, args):
-		argsDef = (('userid', int), ('amount', int), ('paymenthash', str))
-		userid, amount, paymentHash = self.readArgs(args, argsDef)
-
-		storage = self.server.storage
-
-		try:
-			paymentHash = binascii.unhexlify(paymentHash.encode())
-		except Exception as e:
-			print(e)
-			self.writeResult('Invalid payment hash (failed to decode as hex string)', success=False)
-			return
-
-		try:
-			paymentPreimage = \
-				storage.processSenderAck(
-					sender_userid=userid,
-					amount=amount,
-					paymentHash=paymentHash
-					)
-			paymentPreimage = binascii.hexlify(paymentPreimage).decode()
-			self.writeResult({
-				'paymentpreimage': paymentPreimage
-				})
-		except storage.UserNotFound:
-			self.writeResult('User not found', success=False)
-		except storage.TransactionNotFound:
-			self.writeResult('Transaction not found (incorrect amount or payment hash)', success=False)
-		except storage.InsufficientFunds:
-			self.writeResult('Insufficient funds', success=False)
-
-
-	def rpc_receive(self, args):
-		argsDef = (('paymentpreimage', str), )
-		paymentPreimage = self.readArgs(args, argsDef)[0]
-
-		storage = self.server.storage
-
-		try:
-			paymentPreimage = binascii.unhexlify(paymentPreimage.encode())
-		except Exception as e:
-			print(e)
-			self.writeResult('Invalid payment preimage (failed to decode as hex string)', success=False)
-			return
-
-		try:
-			storage.processReceiverClaim(paymentPreimage)
-			self.writeResult({
-				})
-		except storage.TransactionNotFound:
-			self.writeResult('Transaction not found (incorrect preimage)', success=False)
-
-
-	def rpc_getstatus(self, args):
-		self.writeResult(args)
-
-
 	def readArgs(self, args, argsDef):
-		ret = []
-
-		for name, type in argsDef:
-			try:
-				ret.append(type(args[name]))
-			except KeyError:
-				raise RPCException(400, 'Missing parameter %s' % name)
-			except ValueError:
-				raise RPCException(400, 'Invalid value for parameter %s: %s' % (name, args[name]))
 
 		return ret
 
 
-	def writeResult(self, data, success=True):
-		self.do_HEAD(mime='application/json')
-		self.wfile.write(json.dumps({
-			'result': 'success' if success else 'error',
-			'data': data
-			}).encode())
-
-
 
 class RPCServer(socketserver.TCPServer):
-	def __init__(self, storage):
+	def __init__(self):
 		socketserver.TCPServer.__init__(self, ('', PORT), RPCHandler)
-		self.storage = storage
+		self.RPCFunctions = {}
+
+
+	def registerRPCFunction(self, name, function, argsDef):
+		self.RPCFunctions[name] = function, argsDef
 
