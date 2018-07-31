@@ -72,6 +72,17 @@ class TestRPCServer(unittest.TestCase):
 		self.assertEqual(self.callLog, [(3, 'exception')])
 
 
+	def test_nonExistingCall(self):
+		with self.assertRaises(Exception, msg='unexpected response code: 404'):
+			self.client.apiCall('doesNotExist', {})
+
+		with self.assertRaises(Exception, msg='unexpected response code: 404'):
+			self.client.apiCall('function/function', {})
+
+		with self.assertRaises(Exception, msg='unexpected response code: 404'):
+			self.client.apiCall('', {})
+
+
 
 if __name__ == '__main__':
 	unittest.main(verbosity=2)
