@@ -1,3 +1,7 @@
+from functools import reduce
+
+
+
 class Struct:
 	def __init__(self, **kwargs):
 		self.__elementNames = [e for e in dir(self) if not e.startswith('__')]
