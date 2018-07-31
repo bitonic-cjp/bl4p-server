@@ -13,7 +13,7 @@ class ServerThread(threading.Thread):
 	def __init__(self, server):
 		threading.Thread.__init__(self)
 		self.server = server
-		self.server.timeout = 1.0
+		self.server.timeout = 0.1
 
 
 	def start(self):
@@ -38,6 +38,13 @@ class TestRPCServer(unittest.TestCase):
 		self.serverThread = ServerThread(self.server)
 		self.serverThread.start()
 
+		self.callLog = []
+		self.server.registerRPCFunction(
+			'function',
+			self.APIFunction,
+			(('arg1', int), ('arg2', str))
+			)
+
 		self.client = Bl4pApi('http://localhost:8000/', '', '')
 
 
@@ -46,17 +53,23 @@ class TestRPCServer(unittest.TestCase):
 		self.server.server_close()
 
 
+	def APIFunction(self, arg1, arg2):
+		self.callLog.append((arg1, arg2))
+		if arg2 == 'exception':
+			raise Exception('Test exception')
+		return {'ret1': arg1, 'ret2': arg2}
+
+
 	def test_successfullCall(self):
-		callLog = []
-		def simpleFunc(arg):
-			callLog.append(arg)
-			return arg
+		ret = self.client.apiCall('function', {'arg1': 3, 'arg2': 'foo'})
+		self.assertEqual(ret, {'result': 'success', 'data': {'ret1': 3, 'ret2': 'foo'}})
+		self.assertEqual(self.callLog, [(3, 'foo')])
 
-		self.server.registerRPCFunction('simpleFunc', simpleFunc, [('arg', int)])
 
-		ret = self.client.apiCall('simpleFunc', {'arg': 3})
-		self.assertEqual(ret, {'result': 'success', 'data': 3})
-		self.assertEqual(callLog, [3])
+	def test_exceptionCall(self):
+		ret = self.client.apiCall('function', {'arg1': 3, 'arg2': 'exception'})
+		self.assertEqual(ret, {'result': 'error', 'data': 'Test exception'})
+		self.assertEqual(self.callLog, [(3, 'exception')])
 
 
 
