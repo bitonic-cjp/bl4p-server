@@ -1,6 +1,7 @@
 import sys
 import threading
 import unittest
+import urllib.request
 
 sys.path.append('..')
 
@@ -91,6 +92,14 @@ class TestRPCServer(unittest.TestCase):
 	def test_argumentTypeError(self):
 		with self.assertRaises(Exception, msg='unexpected response code: 400'):
 			self.client.apiCall('function', {'arg1': 'bar', 'arg2': 'foo'})
+
+
+	def test_landingPage(self):
+		with urllib.request.urlopen('http://localhost:8000/') as f:
+			page = f.read()
+		self.assertTrue(b'function' in page)
+		self.assertTrue(b'arg1' in page)
+		self.assertTrue(b'arg2' in page)
 
 
 
