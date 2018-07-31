@@ -3,6 +3,7 @@
 all: test
 
 test:
+	python3-coverage run -p test_rpcserver.py
 	python3-coverage run -p test_storage.py
 	python3-coverage combine
 	python3-coverage html
