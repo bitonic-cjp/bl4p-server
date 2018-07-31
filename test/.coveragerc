@@ -1,8 +1,8 @@
 [run]
 branch = true
 
-#Omit test directory
-omit = ./*
+#Omit test directory and system directories
+omit = ./*,/usr/*
 
 [html]
 directory = coverage_html
