@@ -83,6 +83,16 @@ class TestRPCServer(unittest.TestCase):
 			self.client.apiCall('', {})
 
 
+	def test_missingArgument(self):
+		with self.assertRaises(Exception, msg='unexpected response code: 400'):
+			self.client.apiCall('function', {})
+
+
+	def test_argumentTypeError(self):
+		with self.assertRaises(Exception, msg='unexpected response code: 400'):
+			self.client.apiCall('function', {'arg1': 'bar', 'arg2': 'foo'})
+
+
 
 if __name__ == '__main__':
 	unittest.main(verbosity=2)
