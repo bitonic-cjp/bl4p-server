@@ -226,11 +226,11 @@ class Storage:
 		return tx.preimage
 
 
-	def processReceiverClaim(self, preimage):
+	def processReceiverClaim(self, paymentPreimage):
 		'''
 		Process transaction claim by the receiver.
 
-		:param preimage: the payment preimage
+		:param paymentPreimage: the payment preimage
 
 		:raises TransactionNotFound: No transaction was found for this preimage
 		'''
@@ -246,7 +246,7 @@ class Storage:
 		#it's up to the sender to keep the preimage secret in other cases.
 		#That's all we need to know.
 
-		paymentHash = sha256(preimage)
+		paymentHash = sha256(paymentPreimage)
 		tx = self.getTransaction(paymentHash, [TransactionStatus.waiting_for_receiver])
 		receiver = self.getUser(tx.receiver_userid)
 

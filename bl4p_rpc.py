@@ -51,7 +51,7 @@ def send(storage, userid, amount, paymenthash):
 
 def receive(storage, paymentpreimage):
 	try:
-		storage.processReceiverClaim(paymentpreimage)
+		storage.processReceiverClaim(paymentPreimage=paymentpreimage)
 		return {
 			}
 
@@ -61,7 +61,7 @@ def receive(storage, paymentpreimage):
 
 def getstatus(storage, userid, paymenthash):
 	try:
-		status = storage.getTransactionStatus(userid, paymenthash)
+		status = storage.getTransactionStatus(userid=userid, paymentHash=paymenthash)
 		return {
 			'status': status
 			}
