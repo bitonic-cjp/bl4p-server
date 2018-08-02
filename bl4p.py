@@ -16,5 +16,5 @@ bl4p_rpc.registerRPC(server, s)
 
 
 
-server.serve_forever()
+server.run()
 

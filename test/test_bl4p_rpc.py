@@ -11,10 +11,16 @@ import bl4p_rpc
 class MockRPCServer:
 	def __init__(self):
 		self.RPCFunctions = {}
+		self.timeoutFunctions = []
 
 
 	def registerRPCFunction(self, name, function, argsDef):
 		self.RPCFunctions[name] = function, argsDef
+
+
+	def registerTimeoutFunction(self, function):
+		self.timeoutFunctions.append(function)
+
 
 
 class MockStorage(Mock):
@@ -54,7 +60,7 @@ class TestBL4PRPC(unittest.TestCase):
 		}
 
 		server = MockRPCServer()
-		storage = 'foo'
+		storage = Mock()
 
 		bl4p_rpc.registerRPC(server, storage)
 
@@ -85,6 +91,8 @@ class TestBL4PRPC(unittest.TestCase):
 		self.assertEqual(server.RPCFunctions['getstatus'][1],
 			(('userid', int), ('paymenthash', bl4p_rpc.hex2binary))
 			)
+
+		self.assertEqual(server.timeoutFunctions, [storage.processTimeouts])
 
 
 	def test_str2bool(self):

@@ -108,6 +108,7 @@ def registerRPC(RPCServer, storage):
 
 	for name, data in functionData.items():
 		function, argsDef = data
-		function = makeClosure(function, storage)
-		RPCServer.registerRPCFunction(name, function, argsDef)
+		RPCServer.registerRPCFunction(name, makeClosure(function, storage), argsDef)
+
+	RPCServer.registerTimeoutFunction(storage.processTimeouts)
 

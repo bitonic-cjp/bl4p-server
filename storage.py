@@ -156,20 +156,32 @@ class Storage:
 		return amountIncoming, amountOutgoing, paymentHash
 
 
-	def processTimeout(self, paymentHash):
+	def processTimeouts(self):
 		'''
-		Process a transaction time-out event.
+		Process transaction time-out events.
 
-		:param paymentHash: the payment hash of the transaction
+		:returns: the time-delta to the next time-out, or None
 		'''
 
-		try:
-			tx = self.getTransaction(paymentHash, [TransactionStatus.waiting_for_sender])
-			tx.status = TransactionStatus.timeout
-		except Storage.TransactionNotFound:
-			#It's OK to NOP if that transaction does not exist,
-			#or if it no longer has the required state.
-			pass
+		t = time.time()
+
+		nextTimeout = None
+
+		#TODO: cache a sorted time-out list, to make this scalable
+		for tx in self.transactions.values():
+			if tx.status != TransactionStatus.waiting_for_sender:
+				continue
+
+			if tx.timeoutTime <= t:
+				#This time-out has happened
+				print('Transaction time-out happened')
+				tx.status = TransactionStatus.timeout
+
+			elif nextTimeout is None or tx.timeoutTime < nextTimeout:
+				#This is the upcoming time-out
+				nextTimeout = tx.timeoutTime
+
+		return None if nextTimeout is None else nextTimeout - t
 
 
 	def processSenderAck(self, sender_userid, amount, paymentHash):

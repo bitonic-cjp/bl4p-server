@@ -1,5 +1,6 @@
 import sys
 import threading
+import time
 import unittest
 import urllib.request
 
@@ -11,10 +12,21 @@ from api.bl4p import Bl4pApi
 
 
 class ServerThread(threading.Thread):
+	class StopServerThread(Exception):
+		pass
+
+
 	def __init__(self, server):
 		threading.Thread.__init__(self)
 		self.server = server
-		self.server.timeout = 0.1
+
+		def stopThread():
+			if self.stopRequested:
+				raise ServerThread.StopServerThread()
+
+			return 0.1
+
+		self.server.registerTimeoutFunction(stopThread)
 
 
 	def start(self):
@@ -28,8 +40,10 @@ class ServerThread(threading.Thread):
 
 
 	def run(self):
-		while not self.stopRequested:
-			self.server.handle_request()
+		try:
+			self.server.run()
+		except ServerThread.StopServerThread:
+			pass
 
 
 
@@ -92,6 +106,46 @@ class TestRPCServer(unittest.TestCase):
 	def test_argumentTypeError(self):
 		with self.assertRaises(Exception, msg='unexpected response code: 400'):
 			self.client.apiCall('function', {'arg1': 'bar', 'arg2': 'foo'})
+
+
+	def test_timeouts(self):
+		dt1 = None
+		dt2 = None
+		timesCalled = [0, 0]
+		f2Called = 0
+		def f1():
+			timesCalled[0] += 1
+			return dt1
+		def f2():
+			timesCalled[1] += 1
+			return dt2
+
+		#We want a clean server without a running thread:
+		self.serverThread.stop()
+		self.server.server_close()
+		server = rpcserver.RPCServer()
+
+		server.registerTimeoutFunction(f1)
+		server.registerTimeoutFunction(f2)
+
+		server.manageTimeouts()
+		self.assertEqual(server.timeout, None)
+		self.assertEqual(timesCalled, [1,1])
+
+		dt1 = 1.0
+		server.manageTimeouts()
+		self.assertEqual(server.timeout, dt1)
+		self.assertEqual(timesCalled, [2,2])
+
+		dt2 = 2.0
+		server.manageTimeouts()
+		self.assertEqual(server.timeout, dt1)
+		self.assertEqual(timesCalled, [3,3])
+
+		dt1 = None
+		server.manageTimeouts()
+		self.assertEqual(server.timeout, dt2)
+		self.assertEqual(timesCalled, [4,4])
 
 
 	def test_landingPage(self):

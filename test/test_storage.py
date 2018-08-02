@@ -1,5 +1,6 @@
 import decimal
 import sys
+import time
 import unittest
 
 sys.path.append('..')
@@ -113,27 +114,65 @@ class TestStorage(unittest.TestCase):
 			self.storage.startTransaction(self.receiverID, amount=100, timeDelta=-0.1, receiverPaysFee=True)
 
 
-	def test_processTimeout_NOPs(self):
+	def test_processTimeouts(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
 
-		#Test that it succeeds for non-existing transactions
-		self.storage.processTimeout(b'x'*32)
+		#Timeout sequence
 
-		#Now test it in states where it should be a NOP too
+		senderAmount, receiverAmount, paymentHash1 = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=2, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash2 = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=1, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash3 = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=2, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash4 = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=3, receiverPaysFee=True)
 
-		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		time.sleep(0.5)
+		ret = self.storage.processTimeouts()
+		self.assertAlmostEqual(ret, 0.5, places=2)
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash1), 'waiting_for_sender')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash2), 'waiting_for_sender')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash3), 'waiting_for_sender')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash4), 'waiting_for_sender')
+
+		time.sleep(1)
+		ret = self.storage.processTimeouts()
+		self.assertAlmostEqual(ret, 0.5, places=2)
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash1), 'waiting_for_sender')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash2), 'timeout')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash3), 'waiting_for_sender')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash4), 'waiting_for_sender')
+
+		time.sleep(1)
+		ret = self.storage.processTimeouts()
+		self.assertAlmostEqual(ret, 0.5, places=2)
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash1), 'timeout')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash2), 'timeout')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash3), 'timeout')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash4), 'waiting_for_sender')
+
+		time.sleep(1)
+		ret = self.storage.processTimeouts()
+		self.assertEqual(ret, None)
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash1), 'timeout')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash2), 'timeout')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash3), 'timeout')
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash4), 'timeout')
+
+
+		#processTimeouts should be a NOP in those cases:
+
+		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=0.01, receiverPaysFee=True)
 		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
+		time.sleep(0.1)
 
 		statusBefore = self.getTransactionStatus(paymentHash)
-		self.storage.processTimeout(paymentHash)
+		self.assertEqual(self.storage.processTimeouts(), None)
 		statusAfter = self.getTransactionStatus(paymentHash)
 		self.assertEqual(statusBefore, statusAfter)
 
 		self.storage.processReceiverClaim(paymentPreimage)
 
 		statusBefore = self.getTransactionStatus(paymentHash)
-		self.storage.processTimeout(paymentHash)
+		self.assertEqual(self.storage.processTimeouts(), None)
 		statusAfter = self.getTransactionStatus(paymentHash)
 		self.assertEqual(statusBefore, statusAfter)
 
@@ -151,8 +190,9 @@ class TestStorage(unittest.TestCase):
 		with self.assertRaises(storage.Storage.TransactionNotFound):
 			self.storage.processSenderAck(self.senderID, amount=100, paymentHash=b'x'*32)
 
-		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
-		self.storage.processTimeout(paymentHash)
+		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=0.01, receiverPaysFee=True)
+		time.sleep(0.1)
+		self.assertEqual(self.storage.processTimeouts(), None)
 		with self.assertRaises(storage.Storage.TransactionNotFound):
 			self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 
@@ -212,9 +252,10 @@ class TestStorage(unittest.TestCase):
 		with self.assertRaises(storage.Storage.TransactionNotFound):
 			self.storage.processReceiverClaim(paymentPreimage)
 
-		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=0.01, receiverPaysFee=True)
 		paymentPreimage = self.storage.transactions[paymentHash].preimage
-		self.storage.processTimeout(paymentHash)
+		time.sleep(0.1)
+		self.storage.processTimeouts()
 		with self.assertRaises(storage.Storage.TransactionNotFound):
 			self.storage.processReceiverClaim(paymentPreimage)
 
