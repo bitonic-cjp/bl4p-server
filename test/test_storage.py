@@ -85,7 +85,20 @@ class TestStorage(unittest.TestCase):
 		self.assertEqual(self.storage.getTransactionStatus(self.senderID, paymentHash), 'completed')
 
 
-	#TODO: time-out scenarios
+	def test_badFlow_senderTimeout(self):
+		self.setBalance(self.senderID, 500)
+		self.setBalance(self.receiverID, 200)
+
+		#Receiver:
+		senderAmount, receiverAmount, paymentHash = self.storage.startTransaction(self.receiverID, amount=100, timeDelta=0.1, receiverPaysFee=True)
+
+		#Sender:
+		time.sleep(0.2)
+		self.storage.processTimeouts()
+		self.assertEqual(self.getBalance(self.senderID), 500)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash), 'timeout')
+
 
 	def test_startTransaction_UserNotFound(self):
 		with self.assertRaises(storage.Storage.UserNotFound):
