@@ -16,5 +16,11 @@ bl4p_rpc.registerRPC(server, s)
 
 
 
-server.run()
+def main():
+	server.run()
+
+
+
+if __name__ == '__main__':
+	main() # pragma no cover
 
