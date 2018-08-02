@@ -147,6 +147,8 @@ class TestRPCServer(unittest.TestCase):
 		self.assertEqual(server.timeout, dt2)
 		self.assertEqual(timesCalled, [4,4])
 
+		server.server_close()
+
 
 	def test_landingPage(self):
 		with urllib.request.urlopen('http://localhost:8000/') as f:
