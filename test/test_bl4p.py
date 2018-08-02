@@ -61,30 +61,35 @@ class TestBL4P(unittest.TestCase):
 
 
 	def test_goodFlow_receiverPaysFee(self):
+		def assertStatus(userID, paymentHash, expectedStatus):
+			ret = self.client.getStatus(userid=userID, paymenthash=paymentHash)
+			self.assertEqual(ret['result'], 'success')
+			ret = ret['data']
+			self.assertEqual(ret['status'], expectedStatus)
+
 		#Receiver:
 		ret = self.client.start(userid=self.receiverID, amount=100, timedelta=5, receiverpaysfee=True)
 		self.assertEqual(ret['result'], 'success')
 		ret = ret['data']
+		paymentHash = ret['paymenthash']
+		senderAmount = ret['senderamount']
 		self.assertEqual(ret['senderamount'],  100) #not affected by fee
 		self.assertEqual(ret['receiveramount'], 99) #fee subtracted
-
-		'''
-		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_sender')
+		assertStatus(self.receiverID, paymentHash, 'waiting_for_sender')
 
 		#Sender:
-		paymentPreimage = self.storage.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
-		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
-		self.assertEqual(self.getBalance(self.receiverID), 200)
-		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_receiver')
-		self.assertEqual(self.storage.getTransactionStatus(self.senderID, paymentHash), 'waiting_for_receiver')
+		ret = self.client.send(userid=self.senderID, amount=senderAmount, paymenthash=paymentHash)
+		self.assertEqual(ret['result'], 'success')
+		ret = ret['data']
+		paymentPreimage = ret['paymentpreimage']
+		assertStatus(self.receiverID, paymentHash, 'waiting_for_receiver')
+		assertStatus(self.senderID, paymentHash, 'waiting_for_receiver')
 
 		#Receiver:
-		self.storage.processReceiverClaim(paymentPreimage)
-		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
-		self.assertEqual(self.getBalance(self.receiverID), 200 + receiverAmount)
-		self.assertEqual(self.storage.getTransactionStatus(self.receiverID, paymentHash), 'completed')
-		self.assertEqual(self.storage.getTransactionStatus(self.senderID, paymentHash), 'completed')
-		'''
+		ret = self.client.receive(paymentpreimage=paymentPreimage)
+		self.assertEqual(ret['result'], 'success')
+		assertStatus(self.receiverID, paymentHash, 'completed')
+		assertStatus(self.senderID, paymentHash, 'completed')
 
 
 

@@ -99,3 +99,43 @@ class Bl4pApi:
 
 		return self.apiCall('start', params)
 
+
+	def send(self, **params):
+		'''
+		Send funds to a transaction.
+
+		:param userid: the user ID of the sender
+		:param amount: the amount to be transfered from sender to receiver
+		:param paymenthash: the payment hash
+
+		:returns: the result of the function call
+		'''
+
+		return self.apiCall('send', params)
+
+
+	def receive(self, **params):
+		'''
+		Receive funds from a transaction.
+
+
+		:param paymentpreimage: the payment preimage
+
+		:returns: the result of the function call
+		'''
+
+		return self.apiCall('receive', params)
+
+
+	def getStatus(self, **params):
+		'''
+		Return transaction status.
+
+		:param userid: the user ID of the sender or receiver
+		:param paymenthash: the payment hash
+
+		:returns: the result of the function call
+		'''
+
+		return self.apiCall('getstatus', params)
+
