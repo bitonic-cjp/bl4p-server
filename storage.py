@@ -16,7 +16,7 @@ class User(Struct):
 	balance = 0 #int: balance
 
 
-TransactionStatus = Enum(['waiting_for_sender', 'waiting_for_receiver', 'timeout', 'completed'])
+TransactionStatus = Enum(['waiting_for_sender', 'waiting_for_receiver', 'sender_timeout', 'receiver_timeout', 'completed'])
 
 class Transaction(Struct):
 	sender_userid = None   #int or None: sender user ID
@@ -24,7 +24,8 @@ class Transaction(Struct):
 	amountIncoming = 0     #int: amount to be taken from sender
 	amountOutgoing = 0     #int: amount to be given to receiver
 	preimage = None        #bytes: payment preimage
-	timeoutTime = None     #float: payment time-out (seconds since UNIX epoch)
+	senderTimeout = None   #float: sender time-out (seconds since UNIX epoch)
+	receiverTimeout = None #float: receiver time-out (seconds since UNIX epoch)
 	status = None          #TransactionStatus: status
 
 
@@ -59,8 +60,12 @@ class Storage:
 		self.users = {}
 		self.transactions = {}
 
+		#1 + 0.25% fee:
 		self.fee_rate = decimal.Decimal('0.0025')
 		self.fee_base = 1
+
+		#One month time-out for receiver:
+		self.receiverTimeDelta = 30 * 24 * 3600.0
 
 
 	def getUser(self, userid):
@@ -141,7 +146,10 @@ class Storage:
 
 		preimage = os.urandom(32) #TODO: HD wallet instead?
 		paymentHash = sha256(preimage)
-		timeoutTime = time.time() + timeDelta
+
+		currentTime = time.time()
+		senderTimeout = currentTime + timeDelta
+		receiverTimeout = currentTime + self.receiverTimeDelta
 
 		tx = Transaction(
 			sender_userid = None,
@@ -149,39 +157,12 @@ class Storage:
 			amountIncoming = amountIncoming,
 			amountOutgoing = amountOutgoing,
 			preimage = preimage,
-			timeoutTime = timeoutTime,
+			senderTimeout = senderTimeout,
+			receiverTimeout = receiverTimeout,
 			status = TransactionStatus.waiting_for_sender
 			)
 		self.transactions[paymentHash] = tx
 		return amountIncoming, amountOutgoing, paymentHash
-
-
-	def processTimeouts(self):
-		'''
-		Process transaction time-out events.
-
-		:returns: the time-delta to the next time-out, or None
-		'''
-
-		t = time.time()
-
-		nextTimeout = None
-
-		#TODO: cache a sorted time-out list, to make this scalable
-		for tx in self.transactions.values():
-			if tx.status != TransactionStatus.waiting_for_sender:
-				continue
-
-			if tx.timeoutTime <= t:
-				#This time-out has happened
-				print('Transaction time-out happened')
-				tx.status = TransactionStatus.timeout
-
-			elif nextTimeout is None or tx.timeoutTime < nextTimeout:
-				#This is the upcoming time-out
-				nextTimeout = tx.timeoutTime
-
-		return None if nextTimeout is None else nextTimeout - t
 
 
 	def processSenderAck(self, sender_userid, amount, paymentHash):
@@ -287,4 +268,53 @@ class Storage:
 			raise Storage.TransactionNotFound()
 
 		return str(tx.status)
+
+
+	def processTimeouts(self):
+		'''
+		Process transaction time-out events.
+
+		:returns: the time-delta to the next time-out, or None
+		'''
+
+		t = time.time()
+
+		nextTimeout = None
+
+		#TODO: cache a sorted time-out list, to make this scalable
+		for tx in self.transactions.values():
+			#We have two kinds of time-outs
+			if tx.status == TransactionStatus.waiting_for_sender:
+				timeout, handler = tx.senderTimeout, self.processSenderTimeout
+			elif tx.status == TransactionStatus.waiting_for_receiver:
+				timeout, handler = tx.receiverTimeout, self.processReceiverTimeout
+			else:
+				#python3-coverage doesn't detect coverage of
+				#this case, due to a Python optimization.
+				continue # pragma: no cover
+
+			if timeout <= t:
+				#This time-out has happened
+				handler(tx)
+
+			elif nextTimeout is None or timeout < nextTimeout:
+				#This is the upcoming time-out
+				nextTimeout = timeout
+
+		return None if nextTimeout is None else nextTimeout - t
+
+
+	def processSenderTimeout(self, tx):
+		print('Sender time-out happened')
+		assert tx.status == TransactionStatus.waiting_for_sender
+		tx.status = TransactionStatus.sender_timeout
+
+
+	def processReceiverTimeout(self, tx):
+		print('Receiver time-out happened')
+		assert tx.status == TransactionStatus.waiting_for_receiver
+
+		tx.status = TransactionStatus.receiver_timeout
+		sender = self.getUser(tx.sender_userid)
+		sender.balance += tx.amountIncoming
 
