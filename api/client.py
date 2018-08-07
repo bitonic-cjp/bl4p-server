@@ -1,14 +1,14 @@
 import struct
 
-from websocket import WebSocket
+import websocket
 
 import bl4p_proto_pb2
 
 
 
-class Bl4pApi(WebSocket):
+class Bl4pApi(websocket.WebSocket):
 	def __init__(self, url, userid, password):
-		WebSocket.__init__(self)
+		websocket.WebSocket.__init__(self)
 		self.connect(url)
 		self.userid = userid
 		self.password = password
@@ -22,8 +22,9 @@ class Bl4pApi(WebSocket):
 
 		requestTypeID = struct.pack('<I', requestTypeID) #32-bit little endian
 
-		self.send(requestTypeID + serialized)
-		#TODO: receive reply
+		self.send(requestTypeID + serialized, opcode=websocket.ABNF.OPCODE_BINARY)
+		reply = self.recv()
+		print(reply)
 
 		self.lastRequestID += 1
 
