@@ -114,7 +114,10 @@ class WebsocketServer(ThreadingMixIn, TCPServer, API):
         TCPServer.__init__(self, (host, port), WebSocketHandler)
         self.port = self.socket.getsockname()[1]
 
-    def _message_received_(self, handler, msg):
+    def _binary_received_(self, handler, msg):
+        self.handle_message_received(self.handler_to_client(handler), self, msg)
+
+    def _text_received_(self, handler, msg):
         self.handle_message_received(self.handler_to_client(handler), self, msg)
 
     def _ping_received_(self, handler, msg):
@@ -209,10 +212,9 @@ class WebSocketHandler(StreamRequestHandler):
             logger.warn("Continuation frames are not supported.")
             return
         elif opcode == OPCODE_BINARY:
-            logger.warn("Binary frames are not supported.")
-            return
+            opcode_handler = self.server._binary_received_
         elif opcode == OPCODE_TEXT:
-            opcode_handler = self.server._message_received_
+            opcode_handler = self.server._text_received_
         elif opcode == OPCODE_PING:
             opcode_handler = self.server._ping_received_
         elif opcode == OPCODE_PONG:
