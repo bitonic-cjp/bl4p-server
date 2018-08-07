@@ -39,4 +39,5 @@ class Bl4pApi(WebSocket):
 
 api = Bl4pApi('ws://localhost:8000', '', '')
 api.start(amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=True)
+api.close()
 
