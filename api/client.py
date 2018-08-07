@@ -23,8 +23,17 @@ class Bl4pApi(websocket.WebSocket):
 		requestTypeID = struct.pack('<I', requestTypeID) #32-bit little endian
 
 		self.send(requestTypeID + serialized, opcode=websocket.ABNF.OPCODE_BINARY)
-		reply = self.recv()
-		print(reply)
+		message = self.recv()
+
+		resultTypeID = struct.unpack('<I', message[:4])[0] #32-bit little endian
+		if resultTypeID == bl4p_proto_pb2.Msg_BL4P_StartResult:
+			result = bl4p_proto_pb2.BL4P_StartResult()
+			result.ParseFromString(message[4:])
+
+			print(result)
+		else:
+			print('Received unknown message type ', requestTypeID)
+			#TODO: send back error
 
 		self.lastRequestID += 1
 
