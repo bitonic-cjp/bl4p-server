@@ -63,23 +63,14 @@ class API():
             logger.error(str(e), exc_info=True)
             exit(1)
 
-    def new_client(self, client, server):
+    def handle_new_client(self, client, server):
         pass
 
-    def client_left(self, client, server):
+    def handle_client_left(self, client, server):
         pass
 
-    def message_received(self, client, server, message):
+    def handle_message_received(self, client, server, message):
         pass
-
-    def set_fn_new_client(self, fn):
-        self.new_client = fn
-
-    def set_fn_client_left(self, fn):
-        self.client_left = fn
-
-    def set_fn_message_received(self, fn):
-        self.message_received = fn
 
     def send_message(self, client, msg):
         self._unicast_(client, msg)
@@ -124,7 +115,7 @@ class WebsocketServer(ThreadingMixIn, TCPServer, API):
         self.port = self.socket.getsockname()[1]
 
     def _message_received_(self, handler, msg):
-        self.message_received(self.handler_to_client(handler), self, msg)
+        self.handle_message_received(self.handler_to_client(handler), self, msg)
 
     def _ping_received_(self, handler, msg):
         handler.send_pong(msg)
@@ -140,11 +131,11 @@ class WebsocketServer(ThreadingMixIn, TCPServer, API):
             'address': handler.client_address
         }
         self.clients.append(client)
-        self.new_client(client, self)
+        self.handle_new_client(client, self)
 
     def _client_left_(self, handler):
         client = self.handler_to_client(handler)
-        self.client_left(client, self)
+        self.handle_client_left(client, self)
         if client in self.clients:
             self.clients.remove(client)
 
