@@ -23,19 +23,26 @@ class Bl4pApi(websocket.WebSocket):
 		requestTypeID = struct.pack('<I', requestTypeID) #32-bit little endian
 
 		self.send(requestTypeID + serialized, opcode=websocket.ABNF.OPCODE_BINARY)
-		message = self.recv()
 
-		resultTypeID = struct.unpack('<I', message[:4])[0] #32-bit little endian
-		if resultTypeID == bl4p_proto_pb2.Msg_BL4P_StartResult:
-			result = bl4p_proto_pb2.BL4P_StartResult()
-			result.ParseFromString(message[4:])
+		while True:
+			message = self.recv()
+			resultTypeID = struct.unpack('<I', message[:4])[0] #32-bit little endian
+			if resultTypeID == bl4p_proto_pb2.Msg_BL4P_StartResult:
+				result = bl4p_proto_pb2.BL4P_StartResult()
+				result.ParseFromString(message[4:])
+			else:
+				print('Received unknown message type ', requestTypeID)
+				#TODO: send back error
+				break
+			if result.request != self.lastRequestID:
+				#TODO: log a warning (we ignore a message)
+				continue
 
-			print(result)
-		else:
-			print('Received unknown message type ', requestTypeID)
-			#TODO: send back error
+			break
 
 		self.lastRequestID += 1
+
+		return result
 
 
 	def start(self, amount, sender_timeout_delta_ms, receiver_pays_fee):
@@ -48,6 +55,9 @@ class Bl4pApi(websocket.WebSocket):
 
 
 api = Bl4pApi('ws://localhost:8000', '', '')
-api.start(amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=True)
+
+result = api.start(amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=True)
+print(result)
+
 api.close()
 
