@@ -1,8 +1,7 @@
-import struct
-
 import websocket
 
-import bl4p_proto_pb2
+from . import bl4p_proto_pb2
+from .serialization import serialize, deserialize
 
 
 
@@ -18,22 +17,10 @@ class Bl4pApi(websocket.WebSocket):
 
 	def apiCall(self, requestTypeID, requestObj):
 		requestObj.request = self.lastRequestID
-		serialized = requestObj.SerializeToString()
-
-		requestTypeID = struct.pack('<I', requestTypeID) #32-bit little endian
-
-		self.send(requestTypeID + serialized, opcode=websocket.ABNF.OPCODE_BINARY)
+		self.send(serialize(requestObj), opcode=websocket.ABNF.OPCODE_BINARY)
 
 		while True:
-			message = self.recv()
-			resultTypeID = struct.unpack('<I', message[:4])[0] #32-bit little endian
-			if resultTypeID == bl4p_proto_pb2.Msg_BL4P_StartResult:
-				result = bl4p_proto_pb2.BL4P_StartResult()
-				result.ParseFromString(message[4:])
-			else:
-				print('Received unknown message type ', requestTypeID)
-				#TODO: send back error
-				break
+			result = deserialize(self.recv())
 			if result.request != self.lastRequestID:
 				#TODO: log a warning (we ignore a message)
 				continue
@@ -51,7 +38,6 @@ class Bl4pApi(websocket.WebSocket):
 		requestObj.sender_timeout_delta_ms = sender_timeout_delta_ms
 		requestObj.receiver_pays_fee = receiver_pays_fee
 		return self.apiCall(bl4p_proto_pb2.Msg_BL4P_Start, requestObj)
-
 
 
 api = Bl4pApi('ws://localhost:8000', '', '')
