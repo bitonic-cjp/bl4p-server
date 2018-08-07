@@ -234,7 +234,7 @@ class WebSocketHandler(StreamRequestHandler):
         for message_byte in self.read_bytes(payload_length):
             message_byte ^= masks[len(message_bytes) % 4]
             message_bytes.append(message_byte)
-        opcode_handler(self, message_bytes.decode('utf8'))
+        opcode_handler(self, message_bytes)
 
     def send_message(self, message):
         self.send_text(message)
@@ -243,11 +243,6 @@ class WebSocketHandler(StreamRequestHandler):
         self.send_text(message, OPCODE_PONG)
 
     def send_text(self, message, opcode=OPCODE_TEXT):
-        """
-        Important: Fragmented(=continuation) messages are not supported since
-        their usage cases are limited - when we don't know the payload length.
-        """
-
         # Validate message
         if isinstance(message, bytes):
             message = try_decode_UTF8(message)  # this is slower but ensures we have UTF-8
@@ -262,8 +257,15 @@ class WebSocketHandler(StreamRequestHandler):
             logger.warning('Can\'t send message, message has to be a string or bytes. Given type is %s' % type(message))
             return False
 
-        header  = bytearray()
         payload = encode_to_UTF8(message)
+        self.send_binary(payload, opcode)
+
+    def send_binary(self, payload, opcode=OPCODE_BINARY):
+        """
+        Important: Fragmented(=continuation) messages are not supported since
+        their usage cases are limited - when we don't know the payload length.
+        """
+        header  = bytearray()
         payload_length = len(payload)
 
         # Normal payload

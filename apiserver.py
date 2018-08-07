@@ -1,4 +1,8 @@
+import struct
+
 from websocket_server.websocket_server import WebsocketServer
+
+from api import bl4p_proto_pb2
 
 
 
@@ -14,7 +18,6 @@ class APIServer(WebsocketServer):
 	# Called for every client connecting (after handshake)
 	def handle_new_client(self, client, server):
 		print("New client connected and was given id %d" % client['id'])
-		self.send_message_to_all("Hey all, a new client has joined us")
 
 
 	# Called for every client disconnecting
@@ -24,13 +27,32 @@ class APIServer(WebsocketServer):
 
 	# Called when a client sends a message
 	def handle_message_received(self, client, server, message):
-		if len(message) > 200:
-			message = message[:200]+'..'
-		print("Client(%d) said: %s" % (client['id'], message))
+		requestTypeID = struct.unpack('<I', message[:4])[0] #32-bit little endian
 
+		if requestTypeID == bl4p_proto_pb2.Msg_BL4P_Start:
+			request = bl4p_proto_pb2.BL4P_Start()
+			request.ParseFromString(message[4:])
+
+			resultTypeID = bl4p_proto_pb2.Msg_BL4P_StartResult
+			result = bl4p_proto_pb2.BL4P_StartResult()
+			result.sender_amount.amount = request.amount.amount
+			result.receiver_amount.amount = request.amount.amount
+			result.payment_hash.data = b'\x00' * 32
+		else:
+			print('Received unknown message type ', requestTypeID)
+			#TODO: send back error
+
+		result.request = request.request
+		serialized = result.SerializeToString()
+
+		resultTypeID = struct.pack('<I', resultTypeID) #32-bit little endian
+
+		client['handler'].send_binary(resultTypeID + serialized)
+		
 
 	def run(self):
 		self.run_forever()
+
 
 
 api = APIServer()
