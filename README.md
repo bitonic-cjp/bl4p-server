@@ -18,5 +18,7 @@ This project contains the following:
 Requires:
 
 * Python 3
+* Websocket-client for Python (in Debian: python3-websocket package)
+* Python 3 Protobuf (in Debian: python3-protobuf package)
 * Protoc protobuf compiler (in Debian: protobuf-compiler package)
 
