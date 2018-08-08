@@ -5,29 +5,14 @@ from api import bl4p_proto_pb2
 
 
 def start(storage, userID, request):
-	print('start called by userid: ', userID)
-	result = bl4p_proto_pb2.BL4P_StartResult()
-	result.sender_amount.amount = request.amount.amount
-	result.receiver_amount.amount = request.amount.amount
-	result.payment_hash.data = b'\x00' * 32
-	return result
-
-	#TODO: rework function
 	try:
 		senderAmount, receiverAmount, paymentHash = \
 			storage.startTransaction(
-				receiver_userid=userid,
-				amount=amount,
-				timeDelta=timedelta,
-				receiverPaysFee=receiverpaysfee
+				receiver_userid=userID,
+				amount=request.amount.amount,
+				timeDelta=request.sender_timeout_delta_ms / 1000.0,
+				receiverPaysFee=request.receiver_pays_fee
 				)
-		paymentHash = binascii.hexlify(paymentHash).decode()
-		return {
-			'senderamount': senderAmount,
-			'receiveramount': receiverAmount,
-			'paymenthash': paymentHash
-			}
-
 	except storage.UserNotFound:
 		raise Exception('User not found')
 	except storage.InsufficientAmount:
@@ -35,20 +20,21 @@ def start(storage, userID, request):
 	except storage.InvalidTimeDelta:
 		raise Exception('Invalid (non-positive) timedelta')
 
+	result = bl4p_proto_pb2.BL4P_StartResult()
+	result.sender_amount.amount = senderAmount
+	result.receiver_amount.amount = receiverAmount
+	result.payment_hash.data = paymentHash
+	return result
+
 
 def send(storage, userID, request):
-	#TODO: rework function
 	try:
 		paymentPreimage = \
 			storage.processSenderAck(
-				sender_userid=userid,
-				amount=amount,
-				paymentHash=paymenthash
+				sender_userid=userID,
+				amount=request.sender_amount.amount,
+				paymentHash=request.payment_hash.data
 				)
-		paymentPreimage = binascii.hexlify(paymentPreimage).decode()
-		return {
-			'paymentpreimage': paymentPreimage
-			}
 
 	except storage.UserNotFound:
 		raise Exception('User not found')
@@ -57,30 +43,43 @@ def send(storage, userID, request):
 	except storage.InsufficientFunds:
 		raise Exception('Insufficient funds')
 
+	result = bl4p_proto_pb2.BL4P_SendResult()
+	result.payment_preimage.data = paymentPreimage
+	return result
+
 
 def receive(storage, userID, request):
-	#TODO: rework function
 	try:
-		storage.processReceiverClaim(paymentPreimage=paymentpreimage)
-		return {
-			}
-
+		storage.processReceiverClaim(
+			paymentPreimage=request.payment_preimage.data
+			)
 	except storage.TransactionNotFound:
 		raise Exception('Transaction not found (incorrect preimage)')
 
+	result = bl4p_proto_pb2.BL4P_ReceiveResult()
+	return result
+
 
 def getStatus(storage, userID, request):
-	#TODO: rework function
 	try:
-		status = storage.getTransactionStatus(userid=userid, paymentHash=paymenthash)
-		return {
-			'status': status
-			}
-
+		status = storage.getTransactionStatus(
+			userid=userID,
+			paymentHash=request.payment_hash.data)
 	except storage.UserNotFound:
 		raise Exception('User not found')
 	except storage.TransactionNotFound:
 		raise Exception('Transaction not found (incorrect user id or payment hash)')
+
+	result = bl4p_proto_pb2.BL4P_GetStatusResult()
+	result.status = \
+	{
+	'waiting_for_sender'  : bl4p_proto_pb2._waiting_for_sender,
+	'waiting_for_receiver': bl4p_proto_pb2._waiting_for_receiver,
+	'sender_timeout'      : bl4p_proto_pb2._sender_timeout,
+	'receiver_timeout'    : bl4p_proto_pb2._receiver_timeout,
+	'completed'           : bl4p_proto_pb2._completed,
+	}[status]
+	return result
 
 
 
