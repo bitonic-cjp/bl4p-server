@@ -97,16 +97,15 @@ class WebsocketServer(TCPServer, API):
         clients(list): A list of connected clients. A client is a dictionary
             like below.
                 {
-                 'id'      : id,
                  'handler' : handler,
                  'address' : (addr, port)
+                 'headers' : {key: value, ...}
                 }
     """
 
     allow_reuse_address = True
 
     clients = []
-    id_counter = 0
 
     def __init__(self, port, host='127.0.0.1', loglevel=logging.WARNING):
         logger.setLevel(loglevel)
@@ -126,9 +125,7 @@ class WebsocketServer(TCPServer, API):
         pass
 
     def _new_client_(self, handler, headers):
-        self.id_counter += 1
         client = {
-            'id': self.id_counter,
             'handler': handler,
             'address': handler.client_address,
             'headers': headers
