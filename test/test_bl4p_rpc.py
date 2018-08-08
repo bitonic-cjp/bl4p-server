@@ -79,8 +79,7 @@ class TestBL4PRPC(unittest.TestCase):
 					mock.assert_not_called()
 				mock.reset_mock()
 
-		#TODO
-		#self.assertEqual(server.timeoutFunctions, [storage.processTimeouts])
+		self.assertEqual(server.timeoutFunctions, [storage.processTimeouts])
 
 
 	def test_start(self):

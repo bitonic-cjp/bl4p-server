@@ -102,6 +102,5 @@ def registerRPC(server, storage):
 		server.registerRPCFunction(requestType,
 			makeClosure(function, storage))
 
-	#TODO:
-	#server.registerTimeoutFunction(storage.processTimeouts)
+	server.registerTimeoutFunction(storage.processTimeouts)
 
