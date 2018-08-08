@@ -189,7 +189,7 @@ class WebSocketHandler(StreamRequestHandler):
             if e.errno == errno.ECONNRESET:
                 logger.info("Client closed connection.")
                 print("Error: {}".format(e))
-                self.keep_alive = 0
+                self.keep_alive = False
                 return
             b1, b2 = 0, 0
         except ValueError as e:
@@ -202,11 +202,11 @@ class WebSocketHandler(StreamRequestHandler):
 
         if opcode == OPCODE_CLOSE_CONN:
             logger.info("Client asked to close connection.")
-            self.keep_alive = 0
+            self.keep_alive = False
             return
         if not masked:
             logger.warn("Client must always be masked.")
-            self.keep_alive = 0
+            self.keep_alive = False
             return
         if opcode == OPCODE_CONTINUATION:
             logger.warn("Continuation frames are not supported.")
@@ -221,7 +221,7 @@ class WebSocketHandler(StreamRequestHandler):
             opcode_handler = self.server._pong_received_
         else:
             logger.warn("Unknown opcode %#x." % opcode)
-            self.keep_alive = 0
+            self.keep_alive = False
             return
 
         if payload_length == 126:
