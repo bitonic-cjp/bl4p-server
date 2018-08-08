@@ -126,12 +126,13 @@ class WebsocketServer(ThreadingMixIn, TCPServer, API):
     def _pong_received_(self, handler, msg):
         pass
 
-    def _new_client_(self, handler):
+    def _new_client_(self, handler, headers):
         self.id_counter += 1
         client = {
             'id': self.id_counter,
             'handler': handler,
-            'address': handler.client_address
+            'address': handler.client_address,
+            'headers': headers
         }
         self.clients.append(client)
         self.handle_new_client(client, self)
@@ -324,7 +325,7 @@ class WebSocketHandler(StreamRequestHandler):
         response = self.make_handshake_response(key)
         self.handshake_done = self.request.send(response.encode())
         self.valid_client = True
-        self.server._new_client_(self)
+        self.server._new_client_(self, headers)
 
     @classmethod
     def make_handshake_response(cls, key):

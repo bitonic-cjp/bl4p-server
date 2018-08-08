@@ -17,12 +17,21 @@ class APIServer(WebsocketServer):
 
 	# Called for every client connecting (after handshake)
 	def handle_new_client(self, client, server):
-		print("New client connected and was given id %d" % client['id'])
+		try:
+			userid, password = client['headers']['authorization'].split(':')
+			if userid != password:
+				raise Exception() #wrong password
+			client['userid'] = int(userid)
+		except:
+			#Something went wrong, assume authentication failed
+			#TODO: send error message
+			client['userid'] = None
+		print("Client connected: userid ", client['userid'])
 
 
 	# Called for every client disconnecting
 	def handle_client_left(self, client, server):
-		print("Client(%d) disconnected" % client['id'])
+		print("Client disconnected: userid ", client['userid'])
 
 
 	# Called when a client sends a message

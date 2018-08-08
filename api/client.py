@@ -8,7 +8,13 @@ from .serialization import serialize, deserialize
 class Bl4pApi(websocket.WebSocket):
 	def __init__(self, url, userid, password):
 		websocket.WebSocket.__init__(self)
-		self.connect(url)
+
+		header = \
+		{
+		'User-Agent': 'Python Bl4pApi',
+		'Authorization': userid + ':' + password,
+		}
+		self.connect(url, header=header)
 		self.userid = userid
 		self.password = password
 
@@ -40,7 +46,7 @@ class Bl4pApi(websocket.WebSocket):
 		return self.apiCall(bl4p_proto_pb2.Msg_BL4P_Start, requestObj)
 
 
-api = Bl4pApi('ws://localhost:8000', '', '')
+api = Bl4pApi('ws://localhost:8000', '3', '3')
 
 result = api.start(amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=True)
 print(result)
