@@ -56,7 +56,7 @@ class APIServer(WebsocketServer):
 			#TODO: send back error
 
 		#TODO: handle exceptions in function
-		result = function(request)
+		result = function(client['userid'], request)
 
 		result.request = request.request
 		client['handler'].send_binary(serialize(result))
@@ -67,7 +67,8 @@ class APIServer(WebsocketServer):
 
 
 
-def handle_start(request):
+def handle_start(userID, request):
+	print('start called by userid: ', userID)
 	result = bl4p_proto_pb2.BL4P_StartResult()
 	result.sender_amount.amount = request.amount.amount
 	result.receiver_amount.amount = request.amount.amount
