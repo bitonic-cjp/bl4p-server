@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import rpcserver
+import apiserver
 import bl4p_rpc
 import storage
 
-server = rpcserver.RPCServer()
+server = apiserver.APIServer()
 
 
 

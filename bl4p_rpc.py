@@ -1,10 +1,18 @@
 import binascii
 
+from api import bl4p_proto_pb2
 
 
-# RPC functions:
 
-def start(storage, userid, amount, timedelta, receiverpaysfee):
+def start(storage, userID, request):
+	print('start called by userid: ', userID)
+	result = bl4p_proto_pb2.BL4P_StartResult()
+	result.sender_amount.amount = request.amount.amount
+	result.receiver_amount.amount = request.amount.amount
+	result.payment_hash.data = b'\x00' * 32
+	return result
+
+	#TODO: rework function
 	try:
 		senderAmount, receiverAmount, paymentHash = \
 			storage.startTransaction(
@@ -28,7 +36,8 @@ def start(storage, userid, amount, timedelta, receiverpaysfee):
 		raise Exception('Invalid (non-positive) timedelta')
 
 
-def send(storage, userid, amount, paymenthash):
+def send(storage, userID, request):
+	#TODO: rework function
 	try:
 		paymentPreimage = \
 			storage.processSenderAck(
@@ -49,7 +58,8 @@ def send(storage, userid, amount, paymenthash):
 		raise Exception('Insufficient funds')
 
 
-def receive(storage, paymentpreimage):
+def receive(storage, userID, request):
+	#TODO: rework function
 	try:
 		storage.processReceiverClaim(paymentPreimage=paymentpreimage)
 		return {
@@ -59,7 +69,8 @@ def receive(storage, paymentpreimage):
 		raise Exception('Transaction not found (incorrect preimage)')
 
 
-def getstatus(storage, userid, paymenthash):
+def getStatus(storage, userID, request):
+	#TODO: rework function
 	try:
 		status = storage.getTransactionStatus(userid=userid, paymentHash=paymenthash)
 		return {
@@ -73,42 +84,25 @@ def getstatus(storage, userid, paymenthash):
 
 
 
-#Argument type constructors:
-
-def hex2binary(s):
-	try:
-		return binascii.unhexlify(s.encode())
-	except Exception as e:
-		raise ValueError(str(e))
-
-
-def str2bool(s):
-	try:
-		return {'true': True, 'false': False}[s.lower()]
-	except Exception:
-		raise ValueError()
-
-
-
-
 def makeClosure(function, firstArg):
 	def closure(*args, **kwargs):
 		return function(firstArg, *args, **kwargs)
 	return closure
 
 
-def registerRPC(RPCServer, storage):
+def registerRPC(server, storage):
 	functionData = \
 	{
-	'start':     (start    , (('userid', int), ('amount', int), ('timedelta', float), ('receiverpaysfee', str2bool))),
-	'send':      (send     , (('userid', int), ('amount', int), ('paymenthash', hex2binary))),
-	'receive':   (receive  , (('paymentpreimage', hex2binary), )),
-	'getstatus': (getstatus, (('userid', int), ('paymenthash', hex2binary))),
+	bl4p_proto_pb2.BL4P_Start    : start,
+	bl4p_proto_pb2.BL4P_Send     : send,
+	bl4p_proto_pb2.BL4P_Receive  : receive,
+	bl4p_proto_pb2.BL4P_GetStatus: getStatus,
 	}
 
-	for name, data in functionData.items():
-		function, argsDef = data
-		RPCServer.registerRPCFunction(name, makeClosure(function, storage), argsDef)
+	for requestType, function in functionData.items():
+		server.registerRPCFunction(requestType,
+			makeClosure(function, storage))
 
-	RPCServer.registerTimeoutFunction(storage.processTimeouts)
+	#TODO:
+	#server.registerTimeoutFunction(storage.processTimeouts)
 

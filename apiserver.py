@@ -2,7 +2,6 @@ import struct
 
 from websocket_server.websocket_server import WebsocketServer
 
-from api import bl4p_proto_pb2
 from api.serialization import serialize, deserialize
 
 
@@ -64,19 +63,4 @@ class APIServer(WebsocketServer):
 
 	def run(self):
 		self.run_forever()
-
-
-
-def handle_start(userID, request):
-	print('start called by userid: ', userID)
-	result = bl4p_proto_pb2.BL4P_StartResult()
-	result.sender_amount.amount = request.amount.amount
-	result.receiver_amount.amount = request.amount.amount
-	result.payment_hash.data = b'\x00' * 32
-	return result
-
-
-api = APIServer()
-api.registerRPCFunction(bl4p_proto_pb2.BL4P_Start, handle_start)
-api.run()
 
