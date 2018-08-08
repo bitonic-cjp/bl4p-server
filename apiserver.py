@@ -13,6 +13,17 @@ PORT=8000
 class APIServer(WebsocketServer):
 	def __init__(self):
 		WebsocketServer.__init__(self, PORT)
+		self.RPCFunctions = {}
+
+
+	def registerRPCFunction(self, messageType, function):
+		'''
+		Registers an RPC function.
+
+		:param messageType: the input message type.
+		:param function: the function. May raise Exception.
+		'''
+		self.RPCFunctions[messageType] = function
 
 
 	# Called for every client connecting (after handshake)
@@ -38,14 +49,14 @@ class APIServer(WebsocketServer):
 	def handle_message_received(self, client, server, message):
 		request = deserialize(message)
 
-		if isinstance(request, bl4p_proto_pb2.BL4P_Start):
-			result = bl4p_proto_pb2.BL4P_StartResult()
-			result.sender_amount.amount = request.amount.amount
-			result.receiver_amount.amount = request.amount.amount
-			result.payment_hash.data = b'\x00' * 32
-		else:
+		try:
+			function = self.RPCFunctions[request.__class__]
+		except KeyError:
 			print('Received unknown message type')
 			#TODO: send back error
+
+		#TODO: handle exceptions in function
+		result = function(request)
 
 		result.request = request.request
 		client['handler'].send_binary(serialize(result))
@@ -56,6 +67,15 @@ class APIServer(WebsocketServer):
 
 
 
+def handle_start(request):
+	result = bl4p_proto_pb2.BL4P_StartResult()
+	result.sender_amount.amount = request.amount.amount
+	result.receiver_amount.amount = request.amount.amount
+	result.payment_hash.data = b'\x00' * 32
+	return result
+
+
 api = APIServer()
+api.registerRPCFunction(bl4p_proto_pb2.BL4P_Start, handle_start)
 api.run()
 
