@@ -44,43 +44,51 @@ class Bl4pApi:
 		request.amount.amount = amount
 		request.sender_timeout_delta_ms = sender_timeout_delta_ms
 		request.receiver_pays_fee = receiver_pays_fee
-		return self.apiCall(request)
+		result = self.apiCall(request)
+		return result.sender_amount.amount, result.receiver_amount.amount, result.payment_hash.data
 
 
 	def send(self, amount, payment_hash):
 		request = bl4p_proto_pb2.BL4P_Send()
 		request.sender_amount.amount = amount
 		request.payment_hash.data = payment_hash
-		return self.apiCall(request)
+		result = self.apiCall(request)
+		return result.payment_preimage.data
 
 
 	def receive(self, payment_preimage):
 		request = bl4p_proto_pb2.BL4P_Receive()
 		request.payment_preimage.data = payment_preimage
-		return self.apiCall(request)
+		self.apiCall(request)
 
 
 	def getStatus(self, payment_hash):
 		request = bl4p_proto_pb2.BL4P_GetStatus()
 		request.payment_hash.data = payment_hash
-		return self.apiCall(request)
+		result = self.apiCall(request)
+		return \
+		{
+		bl4p_proto_pb2._waiting_for_sender  : 'waiting_for_sender',
+		bl4p_proto_pb2._waiting_for_receiver: 'waiting_for_receiver',
+		bl4p_proto_pb2._sender_timeout      : 'sender_timeout',
+		bl4p_proto_pb2._receiver_timeout    : 'receiver_timeout',
+		bl4p_proto_pb2._completed           : 'completed',
+		}[result.status]
 
 
 
 api = Bl4pApi('ws://localhost:8000', '3', '3')
 
-result = api.start(amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=True)
-print(result)
-paymentHash = result.payment_hash.data
+senderAmount, receiverAmount, paymentHash = api.start(amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=True)
+print(senderAmount, receiverAmount, paymentHash)
 
-result = api.send(amount=result.sender_amount.amount, payment_hash=paymentHash)
-print(result)
+paymentPreimage = api.send(amount=senderAmount, payment_hash=paymentHash)
+print(paymentPreimage)
 
-result = api.receive(payment_preimage=result.payment_preimage.data)
-print(result)
+api.receive(payment_preimage=paymentPreimage)
 
-result = api.getStatus(payment_hash=paymentHash)
-print(result)
+status = api.getStatus(payment_hash=paymentHash)
+print(status)
 
 api.close()
 
