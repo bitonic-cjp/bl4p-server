@@ -10,9 +10,9 @@ from socket import error as SocketError
 import errno
 
 if sys.version_info[0] < 3:
-    from SocketServer import ThreadingMixIn, TCPServer, StreamRequestHandler
+    from SocketServer import TCPServer, StreamRequestHandler
 else:
-    from socketserver import ThreadingMixIn, TCPServer, StreamRequestHandler
+    from socketserver import TCPServer, StreamRequestHandler
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
@@ -81,7 +81,7 @@ class API():
 
 # ------------------------- Implementation -----------------------------
 
-class WebsocketServer(ThreadingMixIn, TCPServer, API):
+class WebsocketServer(TCPServer, API):
     """
 	A websocket server waiting for clients to connect.
 
@@ -104,7 +104,6 @@ class WebsocketServer(ThreadingMixIn, TCPServer, API):
     """
 
     allow_reuse_address = True
-    daemon_threads = True  # comment to keep threads alive until finished
 
     clients = []
     id_counter = 0
