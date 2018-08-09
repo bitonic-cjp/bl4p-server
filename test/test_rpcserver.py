@@ -2,27 +2,24 @@ import sys
 import threading
 import time
 import unittest
-import urllib.request
+from unittest.mock import Mock
 
 sys.path.append('..')
 
-import rpcserver
-from api.bl4p import Bl4pApi
+import apiserver
+from api.client import Bl4pApi
+from api import bl4p_proto_pb2
 
 
 
 class ServerThread(threading.Thread):
-	class StopServerThread(Exception):
-		pass
-
-
 	def __init__(self, server):
 		threading.Thread.__init__(self)
 		self.server = server
 
 		def stopThread():
 			if self.stopRequested:
-				raise ServerThread.StopServerThread()
+				self.server.close()
 
 			return 0.1
 
@@ -40,72 +37,68 @@ class ServerThread(threading.Thread):
 
 
 	def run(self):
-		try:
-			self.server.run()
-		except ServerThread.StopServerThread:
-			pass
+		self.server.run()
 
 
 
 class TestRPCServer(unittest.TestCase):
 	def setUp(self):
-		self.server = rpcserver.RPCServer()
+		self.server = apiserver.APIServer()
 		self.serverThread = ServerThread(self.server)
 		self.serverThread.start()
+		time.sleep(0.1)
 
 		self.callLog = []
 		self.server.registerRPCFunction(
-			'function',
-			self.APIFunction,
-			(('arg1', int), ('arg2', str))
+			bl4p_proto_pb2.BL4P_Start,
+			self.APIFunction
 			)
 
-		self.client = Bl4pApi('http://localhost:8000/', '', '')
+		self.client = Bl4pApi('ws://localhost:8000/', '3', '3')
 
 
 	def tearDown(self):
+		self.client.close()
 		self.serverThread.stop()
-		self.server.server_close()
 
 
-	def APIFunction(self, arg1, arg2):
-		self.callLog.append((arg1, arg2))
-		if arg2 == 'exception':
-			raise Exception('Test exception')
-		return {'ret1': arg1, 'ret2': arg2}
+	def APIFunction(self, userID, request):
+		self.callLog.append((userID, request))
+		ret = bl4p_proto_pb2.BL4P_StartResult()
+		ret.payment_hash.data = b'\x00\xff'
+		return ret
 
 
 	def test_successfullCall(self):
-		ret = self.client.apiCall('function', {'arg1': 3, 'arg2': 'foo'})
-		self.assertEqual(ret, {'result': 'success', 'data': {'ret1': 3, 'ret2': 'foo'}})
-		self.assertEqual(self.callLog, [(3, 'foo')])
+		senderAmount, receiverAmount, paymentHash = self.client.start(
+			amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=False)
+
+		self.assertEqual(paymentHash, b'\x00\xff')
+
+		self.assertEqual(len(self.callLog), 1)
+		userID, request = self.callLog[0]
+		self.assertEqual(userID, 3)
+		self.assertEqual(request.amount.amount, 100)
 
 
-	def test_exceptionCall(self):
-		ret = self.client.apiCall('function', {'arg1': 3, 'arg2': 'exception'})
-		self.assertEqual(ret, {'result': 'error', 'data': 'Test exception'})
-		self.assertEqual(self.callLog, [(3, 'exception')])
+	def test_incorrectPassword(self):
+		self.client.close()
+		self.client = Bl4pApi('ws://localhost:8000/', '3', 'wrong')
+
+		senderAmount, receiverAmount, paymentHash = self.client.start(
+			amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=False)
+
+		self.assertEqual(paymentHash, b'\x00\xff')
+
+		self.assertEqual(len(self.callLog), 1)
+		userID, request = self.callLog[0]
+		self.assertEqual(userID, None)
+		self.assertEqual(request.amount.amount, 100)
 
 
 	def test_nonExistingCall(self):
-		with self.assertRaises(Exception, msg='unexpected response code: 404'):
-			self.client.apiCall('doesNotExist', {})
-
-		with self.assertRaises(Exception, msg='unexpected response code: 404'):
-			self.client.apiCall('function/function', {})
-
-		with self.assertRaises(Exception, msg='unexpected response code: 404'):
-			self.client.apiCall('', {})
-
-
-	def test_missingArgument(self):
-		with self.assertRaises(Exception, msg='unexpected response code: 400'):
-			self.client.apiCall('function', {})
-
-
-	def test_argumentTypeError(self):
-		with self.assertRaises(Exception, msg='unexpected response code: 400'):
-			self.client.apiCall('function', {'arg1': 'bar', 'arg2': 'foo'})
+		with self.assertRaises(Bl4pApi.Error):
+			self.client.getStatus(payment_hash=b'foobar')
 
 
 	def test_timeouts(self):
@@ -122,40 +115,34 @@ class TestRPCServer(unittest.TestCase):
 
 		#We want a clean server without a running thread:
 		self.serverThread.stop()
-		self.server.server_close()
-		server = rpcserver.RPCServer()
+		server = apiserver.APIServer()
+
+		server.loop = Mock()
 
 		server.registerTimeoutFunction(f1)
 		server.registerTimeoutFunction(f2)
 
 		server.manageTimeouts()
-		self.assertEqual(server.timeout, None)
+		server.loop.call_later.assert_called_once_with(600.0, server.manageTimeouts)
 		self.assertEqual(timesCalled, [1,1])
+		server.loop.call_later.reset_mock()
 
 		dt1 = 1.0
 		server.manageTimeouts()
-		self.assertEqual(server.timeout, dt1)
+		server.loop.call_later.assert_called_once_with(dt1, server.manageTimeouts)
 		self.assertEqual(timesCalled, [2,2])
+		server.loop.call_later.reset_mock()
 
 		dt2 = 2.0
 		server.manageTimeouts()
-		self.assertEqual(server.timeout, dt1)
+		server.loop.call_later.assert_called_once_with(dt1, server.manageTimeouts)
 		self.assertEqual(timesCalled, [3,3])
+		server.loop.call_later.reset_mock()
 
 		dt1 = None
 		server.manageTimeouts()
-		self.assertEqual(server.timeout, dt2)
+		server.loop.call_later.assert_called_once_with(dt2, server.manageTimeouts)
 		self.assertEqual(timesCalled, [4,4])
-
-		server.server_close()
-
-
-	def test_landingPage(self):
-		with urllib.request.urlopen('http://localhost:8000/') as f:
-			page = f.read()
-		self.assertTrue(b'function' in page)
-		self.assertTrue(b'arg1' in page)
-		self.assertTrue(b'arg2' in page)
 
 
 
