@@ -26,7 +26,7 @@ class ServerThread(threading.Thread):
 
 		def stopThread():
 			if self.stopRequested:
-				bl4p.server.stop()
+				bl4p.server.close()
 
 			return 0.1
 

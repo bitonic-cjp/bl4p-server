@@ -20,7 +20,7 @@ class APIServer:
 			self.handleMessages,
 			'localhost', PORT
 			)
-		self.loop.run_until_complete(startServer)
+		self.server = self.loop.run_until_complete(startServer)
 
 		self.activeTimer = None
 
@@ -97,9 +97,12 @@ class APIServer:
 		#Initial time-outs set-up:
 		self.manageTimeouts()
 		self.loop.run_forever()
+		self.loop.run_until_complete(self.server.wait_closed())
+		self.loop.close()
 
 
-	def stop(self):
+	def close(self):
+		self.server.close()
 		self.loop.stop()
 
 
