@@ -1,7 +1,6 @@
 import asyncio
 
 import websockets
-import websockets.server
 
 from api.serialization import serialize, deserialize
 
@@ -17,7 +16,7 @@ class APIServer:
 		self.timeoutFunctions = []
 
 		self.loop = asyncio.SelectorEventLoop()
-		startServer = websockets.server.serve(
+		startServer = websockets.serve(
 			self.handleMessages,
 			'localhost', PORT
 			)
@@ -67,25 +66,31 @@ class APIServer:
 			#TODO: send error message
 			userID = None
 
-		while True:
-			message = yield from websocket.recv()
-			request = deserialize(message)
+		try:
+			while True:
+				message = yield from websocket.recv()
+				request = deserialize(message)
 
-			try:
-				function = self.RPCFunctions[request.__class__]
-			except KeyError:
-				print('Received unknown message type')
-				#TODO: send back error
+				try:
+					function = self.RPCFunctions[request.__class__]
+				except KeyError:
+					print('Received unknown message type')
+					#TODO: send back error
 
 
-			#TODO: handle exceptions in function
-			result = function(userID, request)
+				#TODO: handle exceptions in function
+				result = function(userID, request)
 
-			#After a function call, time-outs may have changed:
-			self.manageTimeouts()
+				#After a function call, time-outs may have changed:
+				self.manageTimeouts()
 
-			result.request = request.request
-			yield from websocket.send(serialize(result))
+				result.request = request.request
+				yield from websocket.send(serialize(result))
+		except websockets.ConnectionClosed:
+			#Accept a connection close at any time.
+			#Our response is just to silently break the loop.
+			pass
+
 
 
 	def run(self):
