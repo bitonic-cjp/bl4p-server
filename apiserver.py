@@ -74,8 +74,12 @@ class APIServer:
 					result = bl4p_proto_pb2.Error()
 					result.reason = bl4p_proto_pb2._MalformedRequest
 				else:
-					#TODO: handle exceptions in function
-					result = function(userID, request)
+					try:
+						result = function(userID, request)
+					except Exception as e:
+						print('Something unexpected went wrong: ', str(e))
+						result = bl4p_proto_pb2.Error()
+						result.reason = bl4p_proto_pb2._Unknown
 
 					#After a function call, time-outs may have changed:
 					self.manageTimeouts()

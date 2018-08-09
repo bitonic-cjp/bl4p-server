@@ -49,6 +49,7 @@ class TestAPIServer(unittest.TestCase):
 		time.sleep(0.1)
 
 		self.callLog = []
+		self.generateException = False
 		self.server.registerRPCFunction(
 			bl4p_proto_pb2.BL4P_Start,
 			self.APIFunction
@@ -64,6 +65,8 @@ class TestAPIServer(unittest.TestCase):
 
 	def APIFunction(self, userID, request):
 		self.callLog.append((userID, request))
+		if self.generateException:
+			raise Exception('(intended) test exception')
 		ret = bl4p_proto_pb2.BL4P_StartResult()
 		ret.payment_hash.data = b'\x00\xff'
 		return ret
@@ -74,6 +77,19 @@ class TestAPIServer(unittest.TestCase):
 			amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=False)
 
 		self.assertEqual(paymentHash, b'\x00\xff')
+
+		self.assertEqual(len(self.callLog), 1)
+		userID, request = self.callLog[0]
+		self.assertEqual(userID, 3)
+		self.assertEqual(request.amount.amount, 100)
+
+
+	def test_exceptionInCall(self):
+		self.generateException = True
+
+		with self.assertRaises(Bl4pApi.Error):
+			self.client.start(
+				amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=False)
 
 		self.assertEqual(len(self.callLog), 1)
 		userID, request = self.callLog[0]
