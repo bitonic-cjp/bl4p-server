@@ -6,6 +6,8 @@ from . import bl4p_proto_pb2
 
 id2type = \
 {
+bl4p_proto_pb2.Msg_Error                : bl4p_proto_pb2.Error,
+
 bl4p_proto_pb2.Msg_BL4P_Start           : bl4p_proto_pb2.BL4P_Start,
 bl4p_proto_pb2.Msg_BL4P_StartResult     : bl4p_proto_pb2.BL4P_StartResult,
 bl4p_proto_pb2.Msg_BL4P_Send            : bl4p_proto_pb2.BL4P_Send,

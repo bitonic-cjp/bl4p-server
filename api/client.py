@@ -6,6 +6,10 @@ from .serialization import serialize, deserialize
 
 
 class Bl4pApi:
+	class Error(Exception):
+		pass
+
+
 	def __init__(self, url, userid, password):
 		self.websocket = websocket.WebSocket()
 
@@ -27,7 +31,8 @@ class Bl4pApi:
 		self.websocket.send(serialize(request), opcode=websocket.ABNF.OPCODE_BINARY)
 
 		while True:
-			result = deserialize(self.websocket.recv())
+			result = self.websocket.recv()
+			result = deserialize(result)
 			if result.request != self.lastRequestID:
 				#TODO: log a warning (we ignore a message)
 				continue
@@ -35,6 +40,11 @@ class Bl4pApi:
 			break
 
 		self.lastRequestID += 1
+
+
+		if isinstance(result, bl4p_proto_pb2.Error):
+			#TODO: include error code
+			raise Bl4pApi.Error('An error was received')
 
 		return result
 

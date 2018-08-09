@@ -3,6 +3,7 @@ import asyncio
 import websockets
 
 from api.serialization import serialize, deserialize
+from api import bl4p_proto_pb2
 
 
 
@@ -74,15 +75,15 @@ class APIServer:
 				try:
 					function = self.RPCFunctions[request.__class__]
 				except KeyError:
-					print('Received unknown message type')
-					#TODO: send back error
+					print('Received unsupported request type')
+					result = bl4p_proto_pb2.Error()
+					result.reason = bl4p_proto_pb2._MalformedRequest
+				else:
+					#TODO: handle exceptions in function
+					result = function(userID, request)
 
-
-				#TODO: handle exceptions in function
-				result = function(userID, request)
-
-				#After a function call, time-outs may have changed:
-				self.manageTimeouts()
+					#After a function call, time-outs may have changed:
+					self.manageTimeouts()
 
 				result.request = request.request
 				yield from websocket.send(serialize(result))
