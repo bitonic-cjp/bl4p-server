@@ -3,8 +3,16 @@ import binascii
 from api import bl4p_proto_pb2
 
 
+def error(reason):
+	result = bl4p_proto_pb2.Error()
+	result.reason = reason
+	return result
+
 
 def start(storage, userID, request):
+	if userID is None:
+		return error(bl4p_proto_pb2._Unauthorized)
+
 	try:
 		senderAmount, receiverAmount, paymentHash = \
 			storage.startTransaction(
@@ -14,11 +22,11 @@ def start(storage, userID, request):
 				receiverPaysFee=request.receiver_pays_fee
 				)
 	except storage.UserNotFound:
-		raise Exception('User not found')
+		return error(bl4p_proto_pb2._InvalidAccount)
 	except storage.InsufficientAmount:
-		raise Exception('Insufficient amount (must be positive after subtraction of fees)')
+		return error(bl4p_proto_pb2._InvalidAmount)
 	except storage.InvalidTimeDelta:
-		raise Exception('Invalid (non-positive) timedelta')
+		return error(bl4p_proto_pb2._InvalidAmount)
 
 	result = bl4p_proto_pb2.BL4P_StartResult()
 	result.sender_amount.amount = senderAmount
@@ -28,6 +36,9 @@ def start(storage, userID, request):
 
 
 def send(storage, userID, request):
+	if userID is None:
+		return error(bl4p_proto_pb2._Unauthorized)
+
 	try:
 		paymentPreimage = \
 			storage.processSenderAck(
@@ -37,11 +48,11 @@ def send(storage, userID, request):
 				)
 
 	except storage.UserNotFound:
-		raise Exception('User not found')
+		return error(bl4p_proto_pb2._InvalidAccount)
 	except storage.TransactionNotFound:
-		raise Exception('Transaction not found (incorrect amount or payment hash)')
+		return error(bl4p_proto_pb2._NoSuchOrder)
 	except storage.InsufficientFunds:
-		raise Exception('Insufficient funds')
+		return error(bl4p_proto_pb2._BalanceInsufficient)
 
 	result = bl4p_proto_pb2.BL4P_SendResult()
 	result.payment_preimage.data = paymentPreimage
@@ -54,21 +65,24 @@ def receive(storage, userID, request):
 			paymentPreimage=request.payment_preimage.data
 			)
 	except storage.TransactionNotFound:
-		raise Exception('Transaction not found (incorrect preimage)')
+		return error(bl4p_proto_pb2._NoSuchOrder)
 
 	result = bl4p_proto_pb2.BL4P_ReceiveResult()
 	return result
 
 
 def getStatus(storage, userID, request):
+	if userID is None:
+		return error(bl4p_proto_pb2._Unauthorized)
+
 	try:
 		status = storage.getTransactionStatus(
 			userid=userID,
 			paymentHash=request.payment_hash.data)
 	except storage.UserNotFound:
-		raise Exception('User not found')
+		return error(bl4p_proto_pb2._InvalidAccount)
 	except storage.TransactionNotFound:
-		raise Exception('Transaction not found (incorrect user id or payment hash)')
+		return error(bl4p_proto_pb2._NoSuchOrder)
 
 	result = bl4p_proto_pb2.BL4P_GetStatusResult()
 	result.status = \

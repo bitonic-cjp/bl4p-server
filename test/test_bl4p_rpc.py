@@ -107,8 +107,12 @@ class TestBL4PRPC(unittest.TestCase):
 		for xc in [storage.UserNotFound(), storage.InsufficientAmount(), storage.InvalidTimeDelta()]:
 			storage.startTransaction.reset_mock()
 			storage.startTransaction.side_effect=xc
-			with self.assertRaises(Exception):
-				bl4p_rpc.start(storage, userID=4, request=request)
+			result = bl4p_rpc.start(storage, userID=4, request=request)
+			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+
+		storage.startTransaction.reset_mock()
+		result = bl4p_rpc.start(storage, userID=None, request=request)
+		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 
 	def test_send(self):
@@ -133,8 +137,12 @@ class TestBL4PRPC(unittest.TestCase):
 		for xc in [storage.UserNotFound(), storage.TransactionNotFound(), storage.InsufficientFunds()]:
 			storage.processSenderAck.reset_mock()
 			storage.processSenderAck.side_effect=xc
-			with self.assertRaises(Exception):
-				bl4p_rpc.send(storage, userID=4, request=request)
+			result = bl4p_rpc.send(storage, userID=4, request=request)
+			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+
+		storage.processSenderAck.reset_mock()
+		result = bl4p_rpc.send(storage, userID=None, request=request)
+		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 
 	def test_receive(self):
@@ -152,11 +160,11 @@ class TestBL4PRPC(unittest.TestCase):
 			)
 
 		#Exceptions
-		for xc in [storage.UserNotFound(), storage.TransactionNotFound()]:
+		for xc in [storage.TransactionNotFound()]:
 			storage.processReceiverClaim.reset_mock()
 			storage.processReceiverClaim.side_effect=xc
-			with self.assertRaises(Exception):
-				bl4p_rpc.receive(storage, request=request)
+			result = bl4p_rpc.receive(storage, userID=4, request=request)
+			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 
 	def test_getStatus(self):
@@ -180,8 +188,12 @@ class TestBL4PRPC(unittest.TestCase):
 		for xc in [storage.UserNotFound(), storage.TransactionNotFound()]:
 			storage.getTransactionStatus.reset_mock()
 			storage.getTransactionStatus.side_effect=xc
-			with self.assertRaises(Exception):
-				bl4p_rpc.getstatus(storage, userid=4, request=request)
+			result = bl4p_rpc.getStatus(storage, userID=4, request=request)
+			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+
+		storage.getTransactionStatus.reset_mock()
+		result = bl4p_rpc.getStatus(storage, userID=None, request=request)
+		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 
 
