@@ -41,7 +41,7 @@ class ServerThread(threading.Thread):
 
 
 
-class TestRPCServer(unittest.TestCase):
+class TestAPIServer(unittest.TestCase):
 	def setUp(self):
 		self.server = apiserver.APIServer()
 		self.serverThread = ServerThread(self.server)
