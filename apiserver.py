@@ -17,11 +17,6 @@ class APIServer:
 		self.timeoutFunctions = []
 
 		self.loop = asyncio.SelectorEventLoop()
-		startServer = websockets.serve(
-			self.handleMessages,
-			'localhost', PORT
-			)
-		self.server = self.loop.run_until_complete(startServer)
 
 		self.activeTimer = None
 
@@ -97,6 +92,12 @@ class APIServer:
 	def run(self):
 		#Initial time-outs set-up:
 		self.manageTimeouts()
+
+		startServer = websockets.serve(
+			self.handleMessages,
+			'localhost', PORT
+			)
+		self.server = self.loop.run_until_complete(startServer)
 		self.loop.run_forever()
 		self.loop.run_until_complete(self.server.wait_closed())
 		self.loop.close()
