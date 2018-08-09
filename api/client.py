@@ -48,9 +48,9 @@ class Bl4pApi:
 		return result.sender_amount.amount, result.receiver_amount.amount, result.payment_hash.data
 
 
-	def send(self, amount, payment_hash):
+	def send(self, sender_amount, payment_hash):
 		request = bl4p_proto_pb2.BL4P_Send()
-		request.sender_amount.amount = amount
+		request.sender_amount.amount = sender_amount
 		request.payment_hash.data = payment_hash
 		result = self.apiCall(request)
 		return result.payment_preimage.data
@@ -74,21 +74,4 @@ class Bl4pApi:
 		bl4p_proto_pb2._receiver_timeout    : 'receiver_timeout',
 		bl4p_proto_pb2._completed           : 'completed',
 		}[result.status]
-
-
-
-api = Bl4pApi('ws://localhost:8000', '3', '3')
-
-senderAmount, receiverAmount, paymentHash = api.start(amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=True)
-print(senderAmount, receiverAmount, paymentHash)
-
-paymentPreimage = api.send(amount=senderAmount, payment_hash=paymentHash)
-print(paymentPreimage)
-
-api.receive(payment_preimage=paymentPreimage)
-
-status = api.getStatus(payment_hash=paymentHash)
-print(status)
-
-api.close()
 

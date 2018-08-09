@@ -15,11 +15,13 @@ class APIServer:
 	def __init__(self):
 		self.RPCFunctions = {}
 		self.timeoutFunctions = []
+
+		self.loop = asyncio.SelectorEventLoop()
 		startServer = websockets.server.serve(
 			self.handleMessages,
 			'localhost', PORT
 			)
-		asyncio.get_event_loop().run_until_complete(startServer)
+		self.loop.run_until_complete(startServer)
 
 		self.activeTimer = None
 
@@ -89,8 +91,11 @@ class APIServer:
 	def run(self):
 		#Initial time-outs set-up:
 		self.manageTimeouts()
+		self.loop.run_forever()
 
-		asyncio.get_event_loop().run_forever()
+
+	def stop(self):
+		self.loop.stop()
 
 
 	def manageTimeouts(self):
@@ -107,7 +112,7 @@ class APIServer:
 			if nextTimeout is None or t < nextTimeout:
 				nextTimeout = t
 
-		self.activeTimer = asyncio.get_event_loop().call_later(
+		self.activeTimer = self.loop.call_later(
 				nextTimeout, self.manageTimeouts
 				)
 

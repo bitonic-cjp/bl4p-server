@@ -6,16 +6,12 @@ import urllib.request
 
 sys.path.append('..')
 
-from api.bl4p import Bl4pApi
+from api.client import Bl4pApi
 import bl4p
 
 
 
 class ServerThread(threading.Thread):
-	class StopServerThread(Exception):
-		pass
-
-
 	def start(self):
 		self.stopRequested = False
 		threading.Thread.start(self)
@@ -30,15 +26,12 @@ class ServerThread(threading.Thread):
 
 		def stopThread():
 			if self.stopRequested:
-				raise ServerThread.StopServerThread()
+				bl4p.server.stop()
 
 			return 0.1
 
 		bl4p.server.registerTimeoutFunction(stopThread)
-		try:
-			bl4p.main()
-		except ServerThread.StopServerThread:
-			bl4p.server.server_close()
+		bl4p.main()
 
 
 
@@ -47,6 +40,7 @@ class TestBL4P(unittest.TestCase):
 	def setUpClass(cls):
 		cls.serverThread = ServerThread()
 		cls.serverThread.start()
+		time.sleep(0.5)
 
 
 	@classmethod
@@ -55,41 +49,35 @@ class TestBL4P(unittest.TestCase):
 
 
 	def setUp(self):
-		self.senderID = 3
-		self.receiverID = 6
-		self.client = Bl4pApi('http://localhost:8000/', '', '')
+		self.sender = Bl4pApi('ws://localhost:8000/', '3', '3')
+		self.receiver = Bl4pApi('ws://localhost:8000/', '6', '6')
+
+
+	def tearDown(self):
+		self.sender.close()
+		self.receiver.close()
 
 
 	def test_goodFlow_receiverPaysFee(self):
-		def assertStatus(userID, paymentHash, expectedStatus):
-			ret = self.client.getStatus(userid=userID, paymenthash=paymentHash)
-			self.assertEqual(ret['result'], 'success')
-			ret = ret['data']
-			self.assertEqual(ret['status'], expectedStatus)
+		def assertStatus(interface, paymentHash, expectedStatus):
+			status = interface.getStatus(payment_hash=paymentHash)
+			self.assertEqual(status, expectedStatus)
 
 		#Receiver:
-		ret = self.client.start(userid=self.receiverID, amount=100, timedelta=5, receiverpaysfee=True)
-		self.assertEqual(ret['result'], 'success')
-		ret = ret['data']
-		paymentHash = ret['paymenthash']
-		senderAmount = ret['senderamount']
-		self.assertEqual(ret['senderamount'],  100) #not affected by fee
-		self.assertEqual(ret['receiveramount'], 99) #fee subtracted
-		assertStatus(self.receiverID, paymentHash, 'waiting_for_sender')
+		senderAmount, receiverAmount, paymentHash = self.receiver.start(amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=True)
+		self.assertEqual(senderAmount,  100) #not affected by fee
+		self.assertEqual(receiverAmount, 99) #fee subtracted
+		assertStatus(self.receiver, paymentHash, 'waiting_for_sender')
 
 		#Sender:
-		ret = self.client.send(userid=self.senderID, amount=senderAmount, paymenthash=paymentHash)
-		self.assertEqual(ret['result'], 'success')
-		ret = ret['data']
-		paymentPreimage = ret['paymentpreimage']
-		assertStatus(self.receiverID, paymentHash, 'waiting_for_receiver')
-		assertStatus(self.senderID, paymentHash, 'waiting_for_receiver')
+		paymentPreimage = self.sender.send(sender_amount=senderAmount, payment_hash=paymentHash)
+		assertStatus(self.receiver, paymentHash, 'waiting_for_receiver')
+		assertStatus(self.sender, paymentHash, 'waiting_for_receiver')
 
 		#Receiver:
-		ret = self.client.receive(paymentpreimage=paymentPreimage)
-		self.assertEqual(ret['result'], 'success')
-		assertStatus(self.receiverID, paymentHash, 'completed')
-		assertStatus(self.senderID, paymentHash, 'completed')
+		self.receiver.receive(payment_preimage=paymentPreimage)
+		assertStatus(self.receiver, paymentHash, 'completed')
+		assertStatus(self.sender, paymentHash, 'completed')
 
 
 
