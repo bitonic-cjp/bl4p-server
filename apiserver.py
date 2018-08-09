@@ -1,19 +1,27 @@
-import struct
+import asyncio
 
-from websocket_server.websocket_server import WebsocketServer
+import websockets
+import websockets.server
 
 from api.serialization import serialize, deserialize
+
 
 
 PORT=8000
 
 
 
-class APIServer(WebsocketServer):
+class APIServer:
 	def __init__(self):
-		WebsocketServer.__init__(self, PORT)
 		self.RPCFunctions = {}
 		self.timeoutFunctions = []
+		startServer = websockets.server.serve(
+			self.handleMessages,
+			'localhost', PORT
+			)
+		asyncio.get_event_loop().run_until_complete(startServer)
+
+		self.activeTimer = None
 
 
 	def registerRPCFunction(self, messageType, function):
@@ -44,54 +52,62 @@ class APIServer(WebsocketServer):
 		self.timeoutFunctions.append(function)
 
 
-	# Called for every client connecting (after handshake)
-	def handle_new_client(self, client, server):
+	@asyncio.coroutine
+	def handleMessages(self, websocket, path):
 		try:
-			userid, password = client['headers']['authorization'].split(':')
-			if userid != password:
+			userID, password = websocket.request_headers['authorization'].split(':')
+			if userID != password:
 				raise Exception() #wrong password
-			client['userid'] = int(userid)
+
+			userID = int(userID)
 		except:
 			#Something went wrong, assume authentication failed
 			#TODO: send error message
-			client['userid'] = None
-		print("Client connected: userid ", client['userid'])
+			userID = None
+
+		while True:
+			message = yield from websocket.recv()
+			request = deserialize(message)
+
+			try:
+				function = self.RPCFunctions[request.__class__]
+			except KeyError:
+				print('Received unknown message type')
+				#TODO: send back error
 
 
-	# Called for every client disconnecting
-	def handle_client_left(self, client, server):
-		print("Client disconnected: userid ", client['userid'])
+			#TODO: handle exceptions in function
+			result = function(userID, request)
 
+			#After a function call, time-outs may have changed:
+			self.manageTimeouts()
 
-	# Called when a client sends a message
-	def handle_message_received(self, client, server, message):
-		request = deserialize(message)
+			result.request = request.request
+			yield from websocket.send(serialize(result))
 
-		try:
-			function = self.RPCFunctions[request.__class__]
-		except KeyError:
-			print('Received unknown message type')
-			#TODO: send back error
-
-		#TODO: handle exceptions in function
-		result = function(client['userid'], request)
-
-		result.request = request.request
-		client['handler'].send_binary(serialize(result))
-		
 
 	def run(self):
-		while True:
-			self.manageTimeouts()
-			self.handle_request()
+		#Initial time-outs set-up:
+		self.manageTimeouts()
+
+		asyncio.get_event_loop().run_forever()
 
 
 	def manageTimeouts(self):
-		self.timeout = None
+		if self.activeTimer is not None:
+			self.activeTimer.cancel()
+
+		#Re-check at least once every 10 minutes
+		nextTimeout = 600.0
+
 		for f in self.timeoutFunctions:
 			t = f()
 			if t is None:
 				continue
-			if self.timeout is None or t < self.timeout:
-				self.timeout = t
+			if nextTimeout is None or t < nextTimeout:
+				nextTimeout = t
+
+		self.activeTimer = asyncio.get_event_loop().call_later(
+				nextTimeout, self.manageTimeouts
+				)
 
