@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+message Offer {
+
+    /*
+    The max_amount values indicate maximum amount per individual transaction.
+    The offering party is likely to reject larger transactions.
+
+    After completing a transaction, the offering party may keep the offer open
+    to accept more transactions under the same conditions, so the offer does not
+    indicate the total amount available.
+
+    The limit exchange rate is implied by the max_amount values.
+    */
+
+    message Asset {
+        uint64 max_amount = 1;
+        uint64 max_amount_divisor = 2; //e.g. 100 if max_amount is in EUR cent, or 100 000 000 if max_amount is in BTC satoshi
+        string currency = 3;           //e.g. 'btc' for Bitcoin
+        string exchange = 4;           //e.g. 'ln' for Lightning, or an exchange API URL
+    }
+
+    Asset bid = 1; //what is offered
+    Asset ask = 2; //what must be paid
+
+    //Transaction destination (e.g. Lightning node ID)
+    string address = 3;
+
+    //Transaction conditions
+    message Condition {
+        enum Key {
+            UNKNOWN = 0;
+
+            //For incoming LN funds:
+            MIN_CLTV_EXPIRY_DELTA = 1; //Minimum incoming CLTV w.r.t. current block height
+
+            //For custodial funds:
+            MIN_LOCKED_TIMEOUT = 2;
+            MAX_LOCKED_TIMEOUT = 3;
+
+            //Note: others might be added in the future.
+        }
+
+        Key key = 1;
+        sint64 value = 2;
+    }
+
+    repeated Condition conditions = 4;
+}
+

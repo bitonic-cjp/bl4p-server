@@ -47,18 +47,27 @@ syntax = "proto3";
     Requests are handled asynchronously, and responses may be received in any order.
 */
 
+import "offers.proto";
+
 enum MessageType {
     Msg_Error = 0;
 
     // The range 0x1000 to 0x2000 is reserved for Bl4p.
-    Msg_BL4P_Start = 0x1000;
-    Msg_BL4P_StartResult = 0x1001;
-    Msg_BL4P_Send = 0x1002;
-    Msg_BL4P_SendResult = 0x1003;
-    Msg_BL4P_Receive = 0x1004;
-    Msg_BL4P_ReceiveResult = 0x1005;
-    Msg_BL4P_GetStatus = 0x1006;
+    Msg_BL4P_Start           = 0x1000;
+    Msg_BL4P_StartResult     = 0x1001;
+    Msg_BL4P_Send            = 0x1002;
+    Msg_BL4P_SendResult      = 0x1003;
+    Msg_BL4P_Receive         = 0x1004;
+    Msg_BL4P_ReceiveResult   = 0x1005;
+    Msg_BL4P_GetStatus       = 0x1006;
     Msg_BL4P_GetStatusResult = 0x1007;
+
+    Msg_BL4P_AddOffer          = 0x1100;
+    Msg_BL4P_AddOfferResult    = 0x1101;
+    Msg_BL4P_RemoveOffer       = 0x1102;
+    Msg_BL4P_RemoveOfferResult = 0x1103;
+    Msg_BL4P_FindOffers        = 0x1104;
+    Msg_BL4P_FindOffersResult  = 0x1105;
 };
 
 // TODO: ditch the underscore, and find a better alternative to solve scoping issue.
@@ -94,6 +103,11 @@ message BL4P_Amount {
 
 message BL4P_CryptoData {
 	bytes data = 1; //Must be fixed-length 256-bit
+}
+
+message Error {
+    uint64 request = 1;
+    ErrorReason reason = 2;
 }
 
 message BL4P_Start {
@@ -140,8 +154,31 @@ message BL4P_GetStatusResult {
     BL4P_TransactionStatus status = 2;
 }
 
-message Error {
+message BL4P_AddOffer {
     uint64 request = 1;
-    ErrorReason reason = 2;
+    Offer offer = 2;
+}
+
+message BL4P_AddOfferResult {
+    uint64 request = 1;
+}
+
+message BL4P_RemoveOffer {
+    uint64 request = 1;
+    BL4P_CryptoData offer_hash = 2;
+}
+
+message BL4P_RemoveOfferResult {
+    uint64 request = 1;
+}
+
+message BL4P_FindOffers {
+    uint64 request = 1;
+    //TODO: query definition
+}
+
+message BL4P_FindOffersResult {
+    uint64 request = 1;
+    repeated Offer offers = 2;
 }
 
