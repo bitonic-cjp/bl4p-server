@@ -2,6 +2,7 @@
 
 import apiserver
 import bl4p_rpc
+import orderbook_rpc
 import storage
 
 server = apiserver.APIServer()
@@ -13,6 +14,7 @@ s.users[3] = storage.User(id=3, balance=2000)
 s.users[6] = storage.User(id=6, balance=5000)
 
 bl4p_rpc.registerRPC(server, s)
+orderbook_rpc.registerRPC(server, None)
 
 
 

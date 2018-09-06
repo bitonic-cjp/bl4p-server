@@ -6,7 +6,7 @@ import urllib.request
 
 sys.path.append('..')
 
-from api.client import Bl4pApi
+from api.client import Bl4pApi, Asset, Offer
 import bl4p
 
 
@@ -78,6 +78,29 @@ class TestBL4P(unittest.TestCase):
 		self.receiver.receive(payment_preimage=paymentPreimage)
 		assertStatus(self.receiver, paymentHash, 'completed')
 		assertStatus(self.sender, paymentHash, 'completed')
+
+
+	def test_orderbook_API(self):
+		div_mBTC = 1000
+		div_EUR  = 1
+		addedOffer = Offer(
+			bid = Asset(1, div_mBTC, 'btc', 'ln'),
+			ask = Asset(5, div_EUR , 'eur', 'bl3p.eu'),
+			address = 'foobar',
+			min_cltv_expiry_delta = 3,
+			min_locked_timeout = 4,
+			max_locked_timeout = 5
+			)
+
+		self.sender.addOffer(addedOffer)
+
+		foundOffers = self.receiver.findOffers(None)
+		#TODO
+
+		self.sender.removeOffer('foobar')
+
+		foundOffers = self.receiver.findOffers(None)
+		#TODO
 
 
 

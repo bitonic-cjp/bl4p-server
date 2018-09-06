@@ -1,7 +1,71 @@
 import websocket
 
-from . import bl4p_proto_pb2
+from . import bl4p_proto_pb2, offers_pb2
 from .serialization import serialize, deserialize
+
+
+def Asset(max_amount, max_amount_divisor, currency, exchange):
+	ret = offers_pb2.Offer.Asset()
+	ret.max_amount = max_amount
+	ret.max_amount_divisor = max_amount_divisor
+	ret.currency = currency
+	ret.exchange = exchange
+	return ret
+
+
+class Offer:
+	@staticmethod
+	def fromBP2(pb2):
+		ret = Offer(pb2.bid, pb2.ask, pb2.address)
+
+		Condition = offers_pb2.Offer.Condition
+		for condition in pb2.conditions:
+			if condition.key == Condition.MIN_CLTV_EXPIRY_DELTA:
+				ret.min_cltv_expiry_delta = condition.value
+			elif condition.key == Condition.MIN_LOCKED_TIMEOUT:
+				ret.min_locked_timeout = condition.value
+			elif condition.key == Condition.MAX_LOCKED_TIMEOUT:
+				ret.max_locked_timeout = condition.value
+			else:
+				raise Exception('Unknown condition type')
+
+		return ret
+
+
+	def __init__(self,
+			bid, ask,
+			address,
+			min_cltv_expiry_delta = None,
+			min_locked_timeout = None,
+			max_locked_timeout = None,
+			):
+		self.bid = bid
+		self.ask = ask
+		self.address = address
+		self.min_cltv_expiry_delta = min_cltv_expiry_delta
+		self.min_locked_timeout = min_locked_timeout
+		self.max_locked_timeout = max_locked_timeout
+
+
+	def toPB2(self):
+		ret = offers_pb2.Offer()
+		ret.bid.CopyFrom(self.bid)
+		ret.ask.CopyFrom(self.ask)
+		ret.address = self.address
+
+		Condition = offers_pb2.Offer.Condition
+		conditions = \
+		{
+		Condition.MIN_CLTV_EXPIRY_DELTA: self.min_cltv_expiry_delta,
+		Condition.MIN_LOCKED_TIMEOUT   : self.min_locked_timeout,
+		Condition.MAX_LOCKED_TIMEOUT   : self.max_locked_timeout,
+		}
+		for key, value in conditions.items():
+			if value is not None:
+				condition = ret.conditions.add()
+				condition.key = key
+				condition.value = value
+		return ret
 
 
 
@@ -84,4 +148,25 @@ class Bl4pApi:
 		bl4p_proto_pb2._receiver_timeout    : 'receiver_timeout',
 		bl4p_proto_pb2._completed           : 'completed',
 		}[result.status]
+
+
+	def addOffer(self, offer):
+		request = bl4p_proto_pb2.BL4P_AddOffer()
+		request.offer.CopyFrom(offer.toPB2())
+		self.apiCall(request)
+
+
+	def removeOffer(self, offer_hash):
+		request = bl4p_proto_pb2.BL4P_RemoveOffer()
+		self.apiCall(request)
+
+
+	def findOffers(self, query):
+		request = bl4p_proto_pb2.BL4P_FindOffers()
+		result = self.apiCall(request)
+		return \
+		[
+		Offer.fromBP2(offer_PB2)
+		for offer_PB2 in result.offers
+		]
 
