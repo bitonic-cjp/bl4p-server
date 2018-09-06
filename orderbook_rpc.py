@@ -34,14 +34,13 @@ def findOffers(market, userID, request):
 		bid = Asset(1, div_mBTC, 'btc', 'ln'),
 		ask = Asset(6, div_EUR , 'eur', 'bl3p.eu'),
 		address = 'foo',
-		min_cltv_expiry_delta = 3,
-		min_locked_timeout = 4,
+		cltv_expiry_delta = (3, 4)
 		),
 	Offer(
 		bid = Asset(8, div_EUR , 'eur', 'bl3p.eu'),
 		ask = Asset(2, div_mBTC, 'btc', 'ln'),
 		address = 'foo',
-		max_locked_timeout = 5,
+		locked_timeout = (5, 6)
 		),
 	]
 

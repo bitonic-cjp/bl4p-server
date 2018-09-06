@@ -87,9 +87,8 @@ class TestBL4P(unittest.TestCase):
 			bid = Asset(1, div_mBTC, 'btc', 'ln'),
 			ask = Asset(5, div_EUR , 'eur', 'bl3p.eu'),
 			address = 'foobar',
-			min_cltv_expiry_delta = 3,
-			min_locked_timeout = 4,
-			max_locked_timeout = 5
+			cltv_expiry_delta = (3, 4),
+			locked_timeout = (5, 6),
 			)
 
 		self.sender.addOffer(addedOffer)

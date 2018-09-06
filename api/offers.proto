@@ -32,17 +32,23 @@ message Offer {
             UNKNOWN = 0;
 
             //For incoming LN funds:
-            MIN_CLTV_EXPIRY_DELTA = 1; //Minimum incoming CLTV w.r.t. current block height
+            CLTV_EXPIRY_DELTA = 1; //incoming CLTV w.r.t. current block height
 
             //For custodial funds:
-            MIN_LOCKED_TIMEOUT = 2;
-            MAX_LOCKED_TIMEOUT = 3;
+            LOCKED_TIMEOUT = 2;
 
             //Note: others might be added in the future.
         }
-
         Key key = 1;
-        sint64 value = 2;
+
+        /*
+        If a certain minimum or maximum is not needed, it can be set to the most
+        extreme value, e.g. INT64_MIN or INT64_MAX.
+        If an exact value is required, set both the minimum and maximum to that
+        value.
+        */
+        sint64 min_value = 2;
+        sint64 max_value = 3;
     }
 
     repeated Condition conditions = 4;

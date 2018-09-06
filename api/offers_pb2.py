@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='offers.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x0coffers.proto\"\xf0\x02\n\x05Offer\x12\x19\n\x03\x62id\x18\x01 \x01(\x0b\x32\x0c.Offer.Asset\x12\x19\n\x03\x61sk\x18\x02 \x01(\x0b\x32\x0c.Offer.Asset\x12\x0f\n\x07\x61\x64\x64ress\x18\x03 \x01(\t\x12$\n\nconditions\x18\x04 \x03(\x0b\x32\x10.Offer.Condition\x1a[\n\x05\x41sset\x12\x12\n\nmax_amount\x18\x01 \x01(\x04\x12\x1a\n\x12max_amount_divisor\x18\x02 \x01(\x04\x12\x10\n\x08\x63urrency\x18\x03 \x01(\t\x12\x10\n\x08\x65xchange\x18\x04 \x01(\t\x1a\x9c\x01\n\tCondition\x12!\n\x03key\x18\x01 \x01(\x0e\x32\x14.Offer.Condition.Key\x12\r\n\x05value\x18\x02 \x01(\x12\"]\n\x03Key\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x19\n\x15MIN_CLTV_EXPIRY_DELTA\x10\x01\x12\x16\n\x12MIN_LOCKED_TIMEOUT\x10\x02\x12\x16\n\x12MAX_LOCKED_TIMEOUT\x10\x03\x62\x06proto3')
+  serialized_pb=_b('\n\x0coffers.proto\"\xe7\x02\n\x05Offer\x12\x19\n\x03\x62id\x18\x01 \x01(\x0b\x32\x0c.Offer.Asset\x12\x19\n\x03\x61sk\x18\x02 \x01(\x0b\x32\x0c.Offer.Asset\x12\x0f\n\x07\x61\x64\x64ress\x18\x03 \x01(\t\x12$\n\nconditions\x18\x04 \x03(\x0b\x32\x10.Offer.Condition\x1a[\n\x05\x41sset\x12\x12\n\nmax_amount\x18\x01 \x01(\x04\x12\x1a\n\x12max_amount_divisor\x18\x02 \x01(\x04\x12\x10\n\x08\x63urrency\x18\x03 \x01(\t\x12\x10\n\x08\x65xchange\x18\x04 \x01(\t\x1a\x93\x01\n\tCondition\x12!\n\x03key\x18\x01 \x01(\x0e\x32\x14.Offer.Condition.Key\x12\x11\n\tmin_value\x18\x02 \x01(\x12\x12\x11\n\tmax_value\x18\x03 \x01(\x12\"=\n\x03Key\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x15\n\x11\x43LTV_EXPIRY_DELTA\x10\x01\x12\x12\n\x0eLOCKED_TIMEOUT\x10\x02\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -36,22 +36,18 @@ _OFFER_CONDITION_KEY = _descriptor.EnumDescriptor(
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='MIN_CLTV_EXPIRY_DELTA', index=1, number=1,
+      name='CLTV_EXPIRY_DELTA', index=1, number=1,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='MIN_LOCKED_TIMEOUT', index=2, number=2,
-      options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='MAX_LOCKED_TIMEOUT', index=3, number=3,
+      name='LOCKED_TIMEOUT', index=2, number=2,
       options=None,
       type=None),
   ],
   containing_type=None,
   options=None,
-  serialized_start=292,
-  serialized_end=385,
+  serialized_start=315,
+  serialized_end=376,
 )
 _sym_db.RegisterEnumDescriptor(_OFFER_CONDITION_KEY)
 
@@ -122,8 +118,15 @@ _OFFER_CONDITION = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='value', full_name='Offer.Condition.value', index=1,
+      name='min_value', full_name='Offer.Condition.min_value', index=1,
       number=2, type=18, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='max_value', full_name='Offer.Condition.max_value', index=2,
+      number=3, type=18, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -142,7 +145,7 @@ _OFFER_CONDITION = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=229,
-  serialized_end=385,
+  serialized_end=376,
 )
 
 _OFFER = _descriptor.Descriptor(
@@ -193,7 +196,7 @@ _OFFER = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=17,
-  serialized_end=385,
+  serialized_end=376,
 )
 
 _OFFER_ASSET.containing_type = _OFFER
