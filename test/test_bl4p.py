@@ -80,7 +80,7 @@ class TestBL4P(unittest.TestCase):
 		assertStatus(self.sender, paymentHash, 'completed')
 
 
-	def test_orderbook_API(self):
+	def test_offerbook_API(self):
 		div_mBTC = 1000
 		div_EUR  = 1
 		addedOffer = Offer(
