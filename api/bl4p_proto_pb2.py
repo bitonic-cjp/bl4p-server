@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='bl4p_proto.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x10\x62l4p_proto.proto\x1a\x0coffers.proto\"\x1d\n\x0b\x42L4P_Amount\x12\x0e\n\x06\x61mount\x18\x01 \x01(\x04\"\x1f\n\x0f\x42L4P_CryptoData\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\"6\n\x05\x45rror\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x1c\n\x06reason\x18\x02 \x01(\x0e\x32\x0c.ErrorReason\"w\n\nBL4P_Start\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x1c\n\x06\x61mount\x18\x02 \x01(\x0b\x32\x0c.BL4P_Amount\x12\x1f\n\x17sender_timeout_delta_ms\x18\x03 \x01(\r\x12\x19\n\x11receiver_pays_fee\x18\x04 \x01(\x08\"\x97\x01\n\x10\x42L4P_StartResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12#\n\rsender_amount\x18\x02 \x01(\x0b\x32\x0c.BL4P_Amount\x12%\n\x0freceiver_amount\x18\x03 \x01(\x0b\x32\x0c.BL4P_Amount\x12&\n\x0cpayment_hash\x18\x04 \x01(\x0b\x32\x10.BL4P_CryptoData\"i\n\tBL4P_Send\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12#\n\rsender_amount\x18\x02 \x01(\x0b\x32\x0c.BL4P_Amount\x12&\n\x0cpayment_hash\x18\x03 \x01(\x0b\x32\x10.BL4P_CryptoData\"N\n\x0f\x42L4P_SendResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12*\n\x10payment_preimage\x18\x02 \x01(\x0b\x32\x10.BL4P_CryptoData\"K\n\x0c\x42L4P_Receive\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12*\n\x10payment_preimage\x18\x02 \x01(\x0b\x32\x10.BL4P_CryptoData\"%\n\x12\x42L4P_ReceiveResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\"I\n\x0e\x42L4P_GetStatus\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12&\n\x0cpayment_hash\x18\x02 \x01(\x0b\x32\x10.BL4P_CryptoData\"P\n\x14\x42L4P_GetStatusResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\'\n\x06status\x18\x02 \x01(\x0e\x32\x17.BL4P_TransactionStatus\"7\n\rBL4P_AddOffer\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x15\n\x05offer\x18\x02 \x01(\x0b\x32\x06.Offer\"&\n\x13\x42L4P_AddOfferResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\"I\n\x10\x42L4P_RemoveOffer\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12$\n\noffer_hash\x18\x02 \x01(\x0b\x32\x10.BL4P_CryptoData\")\n\x16\x42L4P_RemoveOfferResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\"9\n\x0f\x42L4P_FindOffers\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x15\n\x05query\x18\x02 \x01(\x0b\x32\x06.Offer\"@\n\x15\x42L4P_FindOffersResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x16\n\x06offers\x18\x02 \x03(\x0b\x32\x06.Offer*\x92\x03\n\x0bMessageType\x12\r\n\tMsg_Error\x10\x00\x12\x13\n\x0eMsg_BL4P_Start\x10\x80 \x12\x19\n\x14Msg_BL4P_StartResult\x10\x81 \x12\x12\n\rMsg_BL4P_Send\x10\x82 \x12\x18\n\x13Msg_BL4P_SendResult\x10\x83 \x12\x15\n\x10Msg_BL4P_Receive\x10\x84 \x12\x1b\n\x16Msg_BL4P_ReceiveResult\x10\x85 \x12\x17\n\x12Msg_BL4P_GetStatus\x10\x86 \x12\x1d\n\x18Msg_BL4P_GetStatusResult\x10\x87 \x12\x16\n\x11Msg_BL4P_AddOffer\x10\x80\"\x12\x1c\n\x17Msg_BL4P_AddOfferResult\x10\x81\"\x12\x19\n\x14Msg_BL4P_RemoveOffer\x10\x82\"\x12\x1f\n\x1aMsg_BL4P_RemoveOfferResult\x10\x83\"\x12\x18\n\x13Msg_BL4P_FindOffers\x10\x84\"\x12\x1e\n\x19Msg_BL4P_FindOffersResult\x10\x85\"*\x91\x02\n\x0b\x45rrorReason\x12\x15\n\x11_MalformedRequest\x10\x00\x12\x11\n\r_NoSuchEngine\x10\x01\x12\x10\n\x0c_NoSuchOrder\x10\x02\x12\x13\n\x0f_InvalidAccount\x10\x03\x12\x12\n\x0e_InvalidFilter\x10\x04\x12\x10\n\x0c_InvalidPair\x10\x05\x12\x10\n\x0c_InvalidSide\x10\x06\x12\x18\n\x14_BalanceInsufficient\x10\x07\x12\x12\n\x0e_InvalidAmount\x10\x08\x12\x13\n\x0f_RequestTimeout\x10\t\x12\x15\n\x11_RequestQueueFull\x10\n\x12\x11\n\r_Unauthorized\x10\x0b\x12\x0c\n\x08_Unknown\x10\x0c*\x88\x01\n\x16\x42L4P_TransactionStatus\x12\x17\n\x13_waiting_for_sender\x10\x00\x12\x19\n\x15_waiting_for_receiver\x10\x01\x12\x13\n\x0f_sender_timeout\x10\x02\x12\x15\n\x11_receiver_timeout\x10\x03\x12\x0e\n\n_completed\x10\x04\x62\x06proto3')
+  serialized_pb=_b('\n\x10\x62l4p_proto.proto\x1a\x0coffers.proto\"\x1d\n\x0b\x42L4P_Amount\x12\x0e\n\x06\x61mount\x18\x01 \x01(\x04\"\x1f\n\x0f\x42L4P_CryptoData\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\"6\n\x05\x45rror\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x1c\n\x06reason\x18\x02 \x01(\x0e\x32\x0c.ErrorReason\"w\n\nBL4P_Start\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x1c\n\x06\x61mount\x18\x02 \x01(\x0b\x32\x0c.BL4P_Amount\x12\x1f\n\x17sender_timeout_delta_ms\x18\x03 \x01(\r\x12\x19\n\x11receiver_pays_fee\x18\x04 \x01(\x08\"\x97\x01\n\x10\x42L4P_StartResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12#\n\rsender_amount\x18\x02 \x01(\x0b\x32\x0c.BL4P_Amount\x12%\n\x0freceiver_amount\x18\x03 \x01(\x0b\x32\x0c.BL4P_Amount\x12&\n\x0cpayment_hash\x18\x04 \x01(\x0b\x32\x10.BL4P_CryptoData\"i\n\tBL4P_Send\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12#\n\rsender_amount\x18\x02 \x01(\x0b\x32\x0c.BL4P_Amount\x12&\n\x0cpayment_hash\x18\x03 \x01(\x0b\x32\x10.BL4P_CryptoData\"N\n\x0f\x42L4P_SendResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12*\n\x10payment_preimage\x18\x02 \x01(\x0b\x32\x10.BL4P_CryptoData\"K\n\x0c\x42L4P_Receive\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12*\n\x10payment_preimage\x18\x02 \x01(\x0b\x32\x10.BL4P_CryptoData\"%\n\x12\x42L4P_ReceiveResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\"I\n\x0e\x42L4P_GetStatus\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12&\n\x0cpayment_hash\x18\x02 \x01(\x0b\x32\x10.BL4P_CryptoData\"P\n\x14\x42L4P_GetStatusResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\'\n\x06status\x18\x02 \x01(\x0e\x32\x17.BL4P_TransactionStatus\"7\n\rBL4P_AddOffer\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x15\n\x05offer\x18\x02 \x01(\x0b\x32\x06.Offer\"7\n\x13\x42L4P_AddOfferResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x0f\n\x07offerID\x18\x02 \x01(\x04\"\"\n\x0f\x42L4P_ListOffers\x12\x0f\n\x07request\x18\x01 \x01(\x04\"\x85\x01\n\x15\x42L4P_ListOffersResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12+\n\x06offers\x18\x02 \x03(\x0b\x32\x1b.BL4P_ListOffersResult.Item\x1a.\n\x04Item\x12\x0f\n\x07offerID\x18\x01 \x01(\x04\x12\x15\n\x05offer\x18\x02 \x01(\x0b\x32\x06.Offer\"4\n\x10\x42L4P_RemoveOffer\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x0f\n\x07offerID\x18\x02 \x01(\x04\")\n\x16\x42L4P_RemoveOfferResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\"9\n\x0f\x42L4P_FindOffers\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x15\n\x05query\x18\x02 \x01(\x0b\x32\x06.Offer\"@\n\x15\x42L4P_FindOffersResult\x12\x0f\n\x07request\x18\x01 \x01(\x04\x12\x16\n\x06offers\x18\x02 \x03(\x0b\x32\x06.Offer*\xcc\x03\n\x0bMessageType\x12\r\n\tMsg_Error\x10\x00\x12\x13\n\x0eMsg_BL4P_Start\x10\x80 \x12\x19\n\x14Msg_BL4P_StartResult\x10\x81 \x12\x12\n\rMsg_BL4P_Send\x10\x82 \x12\x18\n\x13Msg_BL4P_SendResult\x10\x83 \x12\x15\n\x10Msg_BL4P_Receive\x10\x84 \x12\x1b\n\x16Msg_BL4P_ReceiveResult\x10\x85 \x12\x17\n\x12Msg_BL4P_GetStatus\x10\x86 \x12\x1d\n\x18Msg_BL4P_GetStatusResult\x10\x87 \x12\x16\n\x11Msg_BL4P_AddOffer\x10\x80\"\x12\x1c\n\x17Msg_BL4P_AddOfferResult\x10\x81\"\x12\x18\n\x13Msg_BL4P_ListOffers\x10\x82\"\x12\x1e\n\x19Msg_BL4P_ListOffersResult\x10\x83\"\x12\x19\n\x14Msg_BL4P_RemoveOffer\x10\x84\"\x12\x1f\n\x1aMsg_BL4P_RemoveOfferResult\x10\x85\"\x12\x18\n\x13Msg_BL4P_FindOffers\x10\x86\"\x12\x1e\n\x19Msg_BL4P_FindOffersResult\x10\x87\"*\x91\x02\n\x0b\x45rrorReason\x12\x15\n\x11_MalformedRequest\x10\x00\x12\x11\n\r_NoSuchEngine\x10\x01\x12\x10\n\x0c_NoSuchOrder\x10\x02\x12\x13\n\x0f_InvalidAccount\x10\x03\x12\x12\n\x0e_InvalidFilter\x10\x04\x12\x10\n\x0c_InvalidPair\x10\x05\x12\x10\n\x0c_InvalidSide\x10\x06\x12\x18\n\x14_BalanceInsufficient\x10\x07\x12\x12\n\x0e_InvalidAmount\x10\x08\x12\x13\n\x0f_RequestTimeout\x10\t\x12\x15\n\x11_RequestQueueFull\x10\n\x12\x11\n\r_Unauthorized\x10\x0b\x12\x0c\n\x08_Unknown\x10\x0c*\x88\x01\n\x16\x42L4P_TransactionStatus\x12\x17\n\x13_waiting_for_sender\x10\x00\x12\x19\n\x15_waiting_for_receiver\x10\x01\x12\x13\n\x0f_sender_timeout\x10\x02\x12\x15\n\x11_receiver_timeout\x10\x03\x12\x0e\n\n_completed\x10\x04\x62\x06proto3')
   ,
   dependencies=[offers__pb2.DESCRIPTOR,])
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
@@ -77,26 +77,34 @@ _MESSAGETYPE = _descriptor.EnumDescriptor(
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='Msg_BL4P_RemoveOffer', index=11, number=4354,
+      name='Msg_BL4P_ListOffers', index=11, number=4354,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='Msg_BL4P_RemoveOfferResult', index=12, number=4355,
+      name='Msg_BL4P_ListOffersResult', index=12, number=4355,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='Msg_BL4P_FindOffers', index=13, number=4356,
+      name='Msg_BL4P_RemoveOffer', index=13, number=4356,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='Msg_BL4P_FindOffersResult', index=14, number=4357,
+      name='Msg_BL4P_RemoveOfferResult', index=14, number=4357,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='Msg_BL4P_FindOffers', index=15, number=4358,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='Msg_BL4P_FindOffersResult', index=16, number=4359,
       options=None,
       type=None),
   ],
   containing_type=None,
   options=None,
-  serialized_start=1230,
-  serialized_end=1632,
+  serialized_start=1398,
+  serialized_end=1858,
 )
 _sym_db.RegisterEnumDescriptor(_MESSAGETYPE)
 
@@ -162,8 +170,8 @@ _ERRORREASON = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1635,
-  serialized_end=1908,
+  serialized_start=1861,
+  serialized_end=2134,
 )
 _sym_db.RegisterEnumDescriptor(_ERRORREASON)
 
@@ -197,8 +205,8 @@ _BL4P_TRANSACTIONSTATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1911,
-  serialized_end=2047,
+  serialized_start=2137,
+  serialized_end=2273,
 )
 _sym_db.RegisterEnumDescriptor(_BL4P_TRANSACTIONSTATUS)
 
@@ -214,10 +222,12 @@ Msg_BL4P_GetStatus = 4102
 Msg_BL4P_GetStatusResult = 4103
 Msg_BL4P_AddOffer = 4352
 Msg_BL4P_AddOfferResult = 4353
-Msg_BL4P_RemoveOffer = 4354
-Msg_BL4P_RemoveOfferResult = 4355
-Msg_BL4P_FindOffers = 4356
-Msg_BL4P_FindOffersResult = 4357
+Msg_BL4P_ListOffers = 4354
+Msg_BL4P_ListOffersResult = 4355
+Msg_BL4P_RemoveOffer = 4356
+Msg_BL4P_RemoveOfferResult = 4357
+Msg_BL4P_FindOffers = 4358
+Msg_BL4P_FindOffersResult = 4359
 _MalformedRequest = 0
 _NoSuchEngine = 1
 _NoSuchOrder = 2
@@ -723,6 +733,13 @@ _BL4P_ADDOFFERRESULT = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='offerID', full_name='BL4P_AddOfferResult.offerID', index=1,
+      number=2, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -736,7 +753,113 @@ _BL4P_ADDOFFERRESULT = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=946,
-  serialized_end=984,
+  serialized_end=1001,
+)
+
+
+_BL4P_LISTOFFERS = _descriptor.Descriptor(
+  name='BL4P_ListOffers',
+  full_name='BL4P_ListOffers',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='request', full_name='BL4P_ListOffers.request', index=0,
+      number=1, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1003,
+  serialized_end=1037,
+)
+
+
+_BL4P_LISTOFFERSRESULT_ITEM = _descriptor.Descriptor(
+  name='Item',
+  full_name='BL4P_ListOffersResult.Item',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='offerID', full_name='BL4P_ListOffersResult.Item.offerID', index=0,
+      number=1, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='offer', full_name='BL4P_ListOffersResult.Item.offer', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1127,
+  serialized_end=1173,
+)
+
+_BL4P_LISTOFFERSRESULT = _descriptor.Descriptor(
+  name='BL4P_ListOffersResult',
+  full_name='BL4P_ListOffersResult',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='request', full_name='BL4P_ListOffersResult.request', index=0,
+      number=1, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='offers', full_name='BL4P_ListOffersResult.offers', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[_BL4P_LISTOFFERSRESULT_ITEM, ],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1040,
+  serialized_end=1173,
 )
 
 
@@ -755,9 +878,9 @@ _BL4P_REMOVEOFFER = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='offer_hash', full_name='BL4P_RemoveOffer.offer_hash', index=1,
-      number=2, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
+      name='offerID', full_name='BL4P_RemoveOffer.offerID', index=1,
+      number=2, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -773,8 +896,8 @@ _BL4P_REMOVEOFFER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=986,
-  serialized_end=1059,
+  serialized_start=1175,
+  serialized_end=1227,
 )
 
 
@@ -804,8 +927,8 @@ _BL4P_REMOVEOFFERRESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1061,
-  serialized_end=1102,
+  serialized_start=1229,
+  serialized_end=1270,
 )
 
 
@@ -842,8 +965,8 @@ _BL4P_FINDOFFERS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1104,
-  serialized_end=1161,
+  serialized_start=1272,
+  serialized_end=1329,
 )
 
 
@@ -880,8 +1003,8 @@ _BL4P_FINDOFFERSRESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1163,
-  serialized_end=1227,
+  serialized_start=1331,
+  serialized_end=1395,
 )
 
 _ERROR.fields_by_name['reason'].enum_type = _ERRORREASON
@@ -896,7 +1019,9 @@ _BL4P_RECEIVE.fields_by_name['payment_preimage'].message_type = _BL4P_CRYPTODATA
 _BL4P_GETSTATUS.fields_by_name['payment_hash'].message_type = _BL4P_CRYPTODATA
 _BL4P_GETSTATUSRESULT.fields_by_name['status'].enum_type = _BL4P_TRANSACTIONSTATUS
 _BL4P_ADDOFFER.fields_by_name['offer'].message_type = offers__pb2._OFFER
-_BL4P_REMOVEOFFER.fields_by_name['offer_hash'].message_type = _BL4P_CRYPTODATA
+_BL4P_LISTOFFERSRESULT_ITEM.fields_by_name['offer'].message_type = offers__pb2._OFFER
+_BL4P_LISTOFFERSRESULT_ITEM.containing_type = _BL4P_LISTOFFERSRESULT
+_BL4P_LISTOFFERSRESULT.fields_by_name['offers'].message_type = _BL4P_LISTOFFERSRESULT_ITEM
 _BL4P_FINDOFFERS.fields_by_name['query'].message_type = offers__pb2._OFFER
 _BL4P_FINDOFFERSRESULT.fields_by_name['offers'].message_type = offers__pb2._OFFER
 DESCRIPTOR.message_types_by_name['BL4P_Amount'] = _BL4P_AMOUNT
@@ -912,6 +1037,8 @@ DESCRIPTOR.message_types_by_name['BL4P_GetStatus'] = _BL4P_GETSTATUS
 DESCRIPTOR.message_types_by_name['BL4P_GetStatusResult'] = _BL4P_GETSTATUSRESULT
 DESCRIPTOR.message_types_by_name['BL4P_AddOffer'] = _BL4P_ADDOFFER
 DESCRIPTOR.message_types_by_name['BL4P_AddOfferResult'] = _BL4P_ADDOFFERRESULT
+DESCRIPTOR.message_types_by_name['BL4P_ListOffers'] = _BL4P_LISTOFFERS
+DESCRIPTOR.message_types_by_name['BL4P_ListOffersResult'] = _BL4P_LISTOFFERSRESULT
 DESCRIPTOR.message_types_by_name['BL4P_RemoveOffer'] = _BL4P_REMOVEOFFER
 DESCRIPTOR.message_types_by_name['BL4P_RemoveOfferResult'] = _BL4P_REMOVEOFFERRESULT
 DESCRIPTOR.message_types_by_name['BL4P_FindOffers'] = _BL4P_FINDOFFERS
@@ -1010,6 +1137,28 @@ BL4P_AddOfferResult = _reflection.GeneratedProtocolMessageType('BL4P_AddOfferRes
   # @@protoc_insertion_point(class_scope:BL4P_AddOfferResult)
   ))
 _sym_db.RegisterMessage(BL4P_AddOfferResult)
+
+BL4P_ListOffers = _reflection.GeneratedProtocolMessageType('BL4P_ListOffers', (_message.Message,), dict(
+  DESCRIPTOR = _BL4P_LISTOFFERS,
+  __module__ = 'bl4p_proto_pb2'
+  # @@protoc_insertion_point(class_scope:BL4P_ListOffers)
+  ))
+_sym_db.RegisterMessage(BL4P_ListOffers)
+
+BL4P_ListOffersResult = _reflection.GeneratedProtocolMessageType('BL4P_ListOffersResult', (_message.Message,), dict(
+
+  Item = _reflection.GeneratedProtocolMessageType('Item', (_message.Message,), dict(
+    DESCRIPTOR = _BL4P_LISTOFFERSRESULT_ITEM,
+    __module__ = 'bl4p_proto_pb2'
+    # @@protoc_insertion_point(class_scope:BL4P_ListOffersResult.Item)
+    ))
+  ,
+  DESCRIPTOR = _BL4P_LISTOFFERSRESULT,
+  __module__ = 'bl4p_proto_pb2'
+  # @@protoc_insertion_point(class_scope:BL4P_ListOffersResult)
+  ))
+_sym_db.RegisterMessage(BL4P_ListOffersResult)
+_sym_db.RegisterMessage(BL4P_ListOffersResult.Item)
 
 BL4P_RemoveOffer = _reflection.GeneratedProtocolMessageType('BL4P_RemoveOffer', (_message.Message,), dict(
   DESCRIPTOR = _BL4P_REMOVEOFFER,

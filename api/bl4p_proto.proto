@@ -64,10 +64,12 @@ enum MessageType {
 
     Msg_BL4P_AddOffer          = 0x1100;
     Msg_BL4P_AddOfferResult    = 0x1101;
-    Msg_BL4P_RemoveOffer       = 0x1102;
-    Msg_BL4P_RemoveOfferResult = 0x1103;
-    Msg_BL4P_FindOffers        = 0x1104;
-    Msg_BL4P_FindOffersResult  = 0x1105;
+    Msg_BL4P_ListOffers        = 0x1102;
+    Msg_BL4P_ListOffersResult  = 0x1103;
+    Msg_BL4P_RemoveOffer       = 0x1104;
+    Msg_BL4P_RemoveOfferResult = 0x1105;
+    Msg_BL4P_FindOffers        = 0x1106;
+    Msg_BL4P_FindOffersResult  = 0x1107;
 };
 
 // TODO: ditch the underscore, and find a better alternative to solve scoping issue.
@@ -161,11 +163,26 @@ message BL4P_AddOffer {
 
 message BL4P_AddOfferResult {
     uint64 request = 1;
+    uint64 offerID = 2;
+}
+
+message BL4P_ListOffers {
+    uint64 request = 1;
+}
+
+message BL4P_ListOffersResult {
+    uint64 request = 1;
+
+    message Item {
+        uint64 offerID = 1;
+        Offer offer = 2;
+    }
+    repeated Item offers = 2;
 }
 
 message BL4P_RemoveOffer {
     uint64 request = 1;
-    BL4P_CryptoData offer_hash = 2;
+    uint64 offerID = 2;
 }
 
 message BL4P_RemoveOfferResult {

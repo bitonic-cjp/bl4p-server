@@ -149,11 +149,22 @@ class Bl4pApi:
 	def addOffer(self, offer):
 		request = bl4p_proto_pb2.BL4P_AddOffer()
 		request.offer.CopyFrom(offer.toPB2())
-		self.apiCall(request)
+		return self.apiCall(request).offerID
 
 
-	def removeOffer(self, offer_hash):
+	def listOffers(self):
+		request = bl4p_proto_pb2.BL4P_ListOffers()
+		result = self.apiCall(request)
+		return \
+		{
+		item.offerID: item.offer
+		for item in result.offers
+		}
+
+
+	def removeOffer(self, offerID):
 		request = bl4p_proto_pb2.BL4P_RemoveOffer()
+		request.offerID = offerID
 		self.apiCall(request)
 
 

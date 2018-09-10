@@ -97,12 +97,18 @@ class TestBL4P(unittest.TestCase):
 			locked_timeout = (5, 6),
 			)
 
-		self.sender.addOffer(addedOffer)
+		addedOfferID = self.sender.addOffer(addedOffer)
+
+		listedOffers = self.sender.listOffers()
+		#TODO
 
 		foundOffers = self.receiver.findOffers(queryOffer)
 		#TODO
 
-		self.sender.removeOffer('foobar')
+		self.sender.removeOffer(addedOfferID)
+
+		listedOffers = self.sender.listOffers()
+		#TODO
 
 		foundOffers = self.receiver.findOffers(queryOffer)
 		#TODO
