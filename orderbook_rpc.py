@@ -25,6 +25,8 @@ def removeOffer(market, userID, request):
 
 
 def findOffers(market, userID, request):
+	query = Offer.fromBP2(request.query)
+
 	#TODO
 	div_mBTC = 1000
 	div_EUR  = 1

@@ -86,19 +86,25 @@ class TestBL4P(unittest.TestCase):
 		addedOffer = Offer(
 			bid = Asset(1, div_mBTC, 'btc', 'ln'),
 			ask = Asset(5, div_EUR , 'eur', 'bl3p.eu'),
-			address = 'foobar',
+			address = 'foo',
 			cltv_expiry_delta = (3, 4),
+			)
+
+		queryOffer = Offer(
+			bid = Asset(5, div_EUR , 'eur', 'bl3p.eu'),
+			ask = Asset(1, div_mBTC, 'btc', 'ln'),
+			address = 'bar',
 			locked_timeout = (5, 6),
 			)
 
 		self.sender.addOffer(addedOffer)
 
-		foundOffers = self.receiver.findOffers(None)
+		foundOffers = self.receiver.findOffers(queryOffer)
 		#TODO
 
 		self.sender.removeOffer('foobar')
 
-		foundOffers = self.receiver.findOffers(None)
+		foundOffers = self.receiver.findOffers(queryOffer)
 		#TODO
 
 

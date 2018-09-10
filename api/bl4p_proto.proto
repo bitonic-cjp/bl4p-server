@@ -174,7 +174,7 @@ message BL4P_RemoveOfferResult {
 
 message BL4P_FindOffers {
     uint64 request = 1;
-    //TODO: query definition
+    Offer query = 2;
 }
 
 message BL4P_FindOffersResult {

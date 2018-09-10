@@ -159,6 +159,7 @@ class Bl4pApi:
 
 	def findOffers(self, query):
 		request = bl4p_proto_pb2.BL4P_FindOffers()
+		request.query.CopyFrom(query.toPB2())
 		result = self.apiCall(request)
 		return \
 		[
