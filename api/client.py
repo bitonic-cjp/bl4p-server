@@ -44,6 +44,10 @@ class Offer:
 		self.locked_timeout = locked_timeout
 
 
+	def __eq__(self, other):
+		return self.__dict__ == other.__dict__
+
+
 	def toPB2(self):
 		ret = offers_pb2.Offer()
 		ret.bid.CopyFrom(self.bid)

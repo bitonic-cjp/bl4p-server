@@ -100,18 +100,18 @@ class TestBL4P(unittest.TestCase):
 		addedOfferID = self.sender.addOffer(addedOffer)
 
 		listedOffers = self.sender.listOffers()
-		#TODO
+		self.assertEqual(listedOffers, {addedOfferID: addedOffer})
 
 		foundOffers = self.receiver.findOffers(queryOffer)
-		#TODO
+		self.assertEqual(foundOffers, [addedOffer])
 
 		self.sender.removeOffer(addedOfferID)
 
 		listedOffers = self.sender.listOffers()
-		#TODO
+		self.assertEqual(listedOffers, {})
 
 		foundOffers = self.receiver.findOffers(queryOffer)
-		#TODO
+		self.assertEqual(foundOffers, [])
 
 
 
