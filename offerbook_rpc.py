@@ -13,7 +13,7 @@ def error(reason):
 def addOffer(offerBook, userID, request):
 	#TODO: check userID not None
 	result = bl4p_proto_pb2.BL4P_AddOfferResult()
-	result.offerID = offerBook.addOffer(userID, Offer.fromPB2(request.offer))
+	result.offerID = offerBook.addOffer(userID, request.offer)
 	return result
 
 
@@ -23,7 +23,7 @@ def listOffers(offerBook, userID, request):
 	for offerID, offer in offerBook.listOffers(userID).items():
 		item = result.offers.add()
 		item.offerID = offerID
-		item.offer.CopyFrom(offer.toPB2())
+		item.offer.CopyFrom(offer)
 	return result
 
 
@@ -38,9 +38,9 @@ def removeOffer(offerBook, userID, request):
 def findOffers(offerBook, userID, request):
 	#TODO: check userID not None
 	result = bl4p_proto_pb2.BL4P_FindOffersResult()
-	for offer in offerBook.findOffers(Offer.fromPB2(request.query)):
+	for offer in offerBook.findOffers(request.query):
 		offer_pb2 = result.offers.add()
-		offer_pb2.CopyFrom(offer.toPB2())
+		offer_pb2.CopyFrom(offer)
 	return result
 
 
