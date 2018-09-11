@@ -12,7 +12,7 @@ PORT=8000
 
 
 
-class APIServer:
+class RPCServer:
 	def __init__(self):
 		self.RPCFunctions = {}
 		self.timeoutFunctions = []

@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 sys.path.append('..')
 
-import apiserver
+import rpcserver
 from api.client import Bl4pApi
 from api import bl4p_proto_pb2
 
@@ -41,9 +41,9 @@ class ServerThread(threading.Thread):
 
 
 
-class TestAPIServer(unittest.TestCase):
+class TestRPCServer(unittest.TestCase):
 	def setUp(self):
-		self.server = apiserver.APIServer()
+		self.server = rpcserver.RPCServer()
 		self.serverThread = ServerThread(self.server)
 		self.serverThread.start()
 		time.sleep(0.1)
@@ -131,7 +131,7 @@ class TestAPIServer(unittest.TestCase):
 
 		#We want a clean server without a running thread:
 		self.serverThread.stop()
-		server = apiserver.APIServer()
+		server = rpcserver.RPCServer()
 
 		server.loop = Mock()
 

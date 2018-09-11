@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import apiserver
 import bl4p_backend
 import bl4p_rpc
 import offerbook_backend
 import offerbook_rpc
+import rpcserver
 
-server = apiserver.APIServer()
+server = rpcserver.RPCServer()
 
 
 
