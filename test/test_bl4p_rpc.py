@@ -24,7 +24,7 @@ class MockServer:
 
 
 
-class MockStorage(Mock):
+class MockBL4P(Mock):
 	class UserNotFound(Exception):
 		pass
 
@@ -61,9 +61,9 @@ class TestBL4PRPC(unittest.TestCase):
 		}
 
 		server = MockServer()
-		storage = Mock()
+		bl4p = Mock()
 
-		bl4p_rpc.registerRPC(server, storage)
+		bl4p_rpc.registerRPC(server, bl4p)
 
 		self.assertEqual(len(server.RPCFunctions.keys()), len(mocks))
 
@@ -73,17 +73,17 @@ class TestBL4PRPC(unittest.TestCase):
 			ret = registeredFunction(1,2,3)
 			for mockType, mock in mocks.items():
 				if mockType == requestType:
-					mock.assert_called_once_with(storage, 1, 2, 3)
+					mock.assert_called_once_with(bl4p, 1, 2, 3)
 					self.assertEqual(ret, mock.return_value)
 				else:
 					mock.assert_not_called()
 				mock.reset_mock()
 
-		self.assertEqual(server.timeoutFunctions, [storage.processTimeouts])
+		self.assertEqual(server.timeoutFunctions, [bl4p.processTimeouts])
 
 
 	def test_start(self):
-		storage = MockStorage()
+		bl4p = MockBL4P()
 
 		request = Mock()
 		request.amount.amount = 5
@@ -91,108 +91,108 @@ class TestBL4PRPC(unittest.TestCase):
 		request.receiver_pays_fee = 7
 
 		#Successfull call
-		storage.startTransaction = Mock(
+		bl4p.startTransaction = Mock(
 			return_value=(100, 99, b'\x00\xff')
 			)
-		result = bl4p_rpc.start(storage, userID=4, request=request)
+		result = bl4p_rpc.start(bl4p, userID=4, request=request)
 		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_StartResult))
 		self.assertEqual(result.sender_amount.amount, 100)
 		self.assertEqual(result.receiver_amount.amount, 99)
 		self.assertEqual(result.payment_hash.data, b'\x00\xff')
-		storage.startTransaction.assert_called_once_with(
+		bl4p.startTransaction.assert_called_once_with(
 			receiver_userid=4, amount=5, timeDelta=6/1000.0, receiverPaysFee=7
 			)
 
 		#Exceptions
-		for xc in [storage.UserNotFound(), storage.InsufficientAmount(), storage.InvalidTimeDelta()]:
-			storage.startTransaction.reset_mock()
-			storage.startTransaction.side_effect=xc
-			result = bl4p_rpc.start(storage, userID=4, request=request)
+		for xc in [bl4p.UserNotFound(), bl4p.InsufficientAmount(), bl4p.InvalidTimeDelta()]:
+			bl4p.startTransaction.reset_mock()
+			bl4p.startTransaction.side_effect=xc
+			result = bl4p_rpc.start(bl4p, userID=4, request=request)
 			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
-		storage.startTransaction.reset_mock()
-		result = bl4p_rpc.start(storage, userID=None, request=request)
+		bl4p.startTransaction.reset_mock()
+		result = bl4p_rpc.start(bl4p, userID=None, request=request)
 		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 
 	def test_send(self):
-		storage = MockStorage()
+		bl4p = MockBL4P()
 
 		request = Mock()
 		request.sender_amount.amount = 5
 		request.payment_hash.data = 6
 
 		#Successfull call
-		storage.processSenderAck = Mock(
+		bl4p.processSenderAck = Mock(
 			return_value=b'\x00\xff'
 			)
-		result = bl4p_rpc.send(storage, userID=4, request=request)
+		result = bl4p_rpc.send(bl4p, userID=4, request=request)
 		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_SendResult))
 		self.assertEqual(result.payment_preimage.data, b'\x00\xff')
-		storage.processSenderAck.assert_called_once_with(
+		bl4p.processSenderAck.assert_called_once_with(
 			sender_userid=4, amount=5, paymentHash=6
 			)
 
 		#Exceptions
-		for xc in [storage.UserNotFound(), storage.TransactionNotFound(), storage.InsufficientFunds()]:
-			storage.processSenderAck.reset_mock()
-			storage.processSenderAck.side_effect=xc
-			result = bl4p_rpc.send(storage, userID=4, request=request)
+		for xc in [bl4p.UserNotFound(), bl4p.TransactionNotFound(), bl4p.InsufficientFunds()]:
+			bl4p.processSenderAck.reset_mock()
+			bl4p.processSenderAck.side_effect=xc
+			result = bl4p_rpc.send(bl4p, userID=4, request=request)
 			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
-		storage.processSenderAck.reset_mock()
-		result = bl4p_rpc.send(storage, userID=None, request=request)
+		bl4p.processSenderAck.reset_mock()
+		result = bl4p_rpc.send(bl4p, userID=None, request=request)
 		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 
 	def test_receive(self):
-		storage = MockStorage()
+		bl4p = MockBL4P()
 
 		request = Mock()
 		request.payment_preimage.data = 5
 
 		#Successfull call
-		storage.processReceiverClaim = Mock()
-		result = bl4p_rpc.receive(storage, userID=4, request=request)
+		bl4p.processReceiverClaim = Mock()
+		result = bl4p_rpc.receive(bl4p, userID=4, request=request)
 		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_ReceiveResult))
-		storage.processReceiverClaim.assert_called_once_with(
+		bl4p.processReceiverClaim.assert_called_once_with(
 			paymentPreimage=5
 			)
 
 		#Exceptions
-		for xc in [storage.TransactionNotFound()]:
-			storage.processReceiverClaim.reset_mock()
-			storage.processReceiverClaim.side_effect=xc
-			result = bl4p_rpc.receive(storage, userID=4, request=request)
+		for xc in [bl4p.TransactionNotFound()]:
+			bl4p.processReceiverClaim.reset_mock()
+			bl4p.processReceiverClaim.side_effect=xc
+			result = bl4p_rpc.receive(bl4p, userID=4, request=request)
 			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 
 	def test_getStatus(self):
-		storage = MockStorage()
+		bl4p = MockBL4P()
 
 		request = Mock()
 		request.payment_hash.data = 5
 
 		#Successfull call
-		storage.getTransactionStatus = Mock(
+		bl4p.getTransactionStatus = Mock(
 			return_value='completed'
 			)
-		result = bl4p_rpc.getStatus(storage, userID=4, request=request)
+		result = bl4p_rpc.getStatus(bl4p, userID=4, request=request)
 		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_GetStatusResult))
 		self.assertEqual(result.status, bl4p_proto_pb2._completed)
-		storage.getTransactionStatus.assert_called_once_with(
+		bl4p.getTransactionStatus.assert_called_once_with(
 			userid=4, paymentHash=5
 			)
 
 		#Exceptions
-		for xc in [storage.UserNotFound(), storage.TransactionNotFound()]:
-			storage.getTransactionStatus.reset_mock()
-			storage.getTransactionStatus.side_effect=xc
-			result = bl4p_rpc.getStatus(storage, userID=4, request=request)
+		for xc in [bl4p.UserNotFound(), bl4p.TransactionNotFound()]:
+			bl4p.getTransactionStatus.reset_mock()
+			bl4p.getTransactionStatus.side_effect=xc
+			result = bl4p_rpc.getStatus(bl4p, userID=4, request=request)
 			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
-		storage.getTransactionStatus.reset_mock()
-		result = bl4p_rpc.getStatus(storage, userID=None, request=request)
+		bl4p.getTransactionStatus.reset_mock()
+		result = bl4p_rpc.getStatus(bl4p, userID=None, request=request)
 		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 

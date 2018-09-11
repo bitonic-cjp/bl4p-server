@@ -29,7 +29,7 @@ class Transaction(Struct):
 	status = None          #TransactionStatus: status
 
 
-class Storage:
+class BL4P:
 	'''
 	BL4P data storage and business logic back-end.
 	This is a dummy class with only volatile (internal memory) storage.
@@ -82,7 +82,7 @@ class Storage:
 		try:
 			ret = self.users[userid]
 		except KeyError:
-			raise Storage.UserNotFound()
+			raise BL4P.UserNotFound()
 
 		assert ret.id == userid
 		return ret
@@ -102,10 +102,10 @@ class Storage:
 		try:
 			ret = self.transactions[paymentHash]
 		except KeyError:
-			raise Storage.TransactionNotFound()
+			raise BL4P.TransactionNotFound()
 
 		if acceptableStates is not None and ret.status not in acceptableStates:
-			raise Storage.TransactionNotFound()
+			raise BL4P.TransactionNotFound()
 
 		return ret
 
@@ -139,10 +139,10 @@ class Storage:
 			amountOutgoing = amount
 
 		if amountOutgoing <= 0:
-			raise Storage.InsufficientAmount()
+			raise BL4P.InsufficientAmount()
 
 		if timeDelta <= 0.0:
-			raise Storage.InvalidTimeDelta()
+			raise BL4P.InvalidTimeDelta()
 
 		preimage = os.urandom(32) #TODO: HD wallet instead?
 		paymentHash = sha256(preimage)
@@ -188,7 +188,7 @@ class Storage:
 			TransactionStatus.waiting_for_receiver
 			])
 		if tx.amountIncoming != amount:
-			raise Storage.TransactionNotFound()
+			raise BL4P.TransactionNotFound()
 
 		#In case of waiting_for_receiver, only send back data:
 		#This is the 2nd, 3d etc. call
@@ -203,7 +203,7 @@ class Storage:
 			#For this, it is necessary the preimage stays a secret
 			#between us and the sender.
 			if tx.sender_userid != sender_userid:
-				raise Storage.TransactionNotFound()
+				raise BL4P.TransactionNotFound()
 
 			#We're clear:
 			return tx.preimage
@@ -211,7 +211,7 @@ class Storage:
 		#Otherwise (waiting_for_sender), take funds from the sender:
 		#This is the 1st call
 		if sender.balance < amount:
-			raise Storage.InsufficientFunds()
+			raise BL4P.InsufficientFunds()
 
 		sender.balance -= amount
 		tx.sender_userid = sender_userid
@@ -265,7 +265,7 @@ class Storage:
 
 		tx = self.getTransaction(paymentHash)
 		if userid not in (tx.sender_userid, tx.receiver_userid):
-			raise Storage.TransactionNotFound()
+			raise BL4P.TransactionNotFound()
 
 		return str(tx.status)
 
