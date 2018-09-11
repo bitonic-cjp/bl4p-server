@@ -2,6 +2,7 @@
 
 import apiserver
 import bl4p_rpc
+import offerbook_backend
 import offerbook_rpc
 import storage
 
@@ -13,8 +14,10 @@ s = storage.Storage()
 s.users[3] = storage.User(id=3, balance=2000)
 s.users[6] = storage.User(id=6, balance=5000)
 
+offerBook = offerbook_backend.OfferBook()
+
 bl4p_rpc.registerRPC(server, s)
-offerbook_rpc.registerRPC(server, None)
+offerbook_rpc.registerRPC(server, offerBook)
 
 
 

@@ -2,25 +2,6 @@ from api import bl4p_proto_pb2
 from api.client import Offer, Asset
 
 
-div_mBTC = 1000
-div_EUR  = 1
-dummyOrderBook = \
-{
-1: Offer(
-	bid = Asset(1, div_mBTC, 'btc', 'ln'),
-	ask = Asset(6, div_EUR , 'eur', 'bl3p.eu'),
-	address = 'foo',
-	cltv_expiry_delta = (3, 4)
-	),
-2: Offer(
-	bid = Asset(8, div_EUR , 'eur', 'bl3p.eu'),
-	ask = Asset(2, div_mBTC, 'btc', 'ln'),
-	address = 'foo',
-	locked_timeout = (5, 6)
-	),
-}
-
-
 
 def error(reason):
 	result = bl4p_proto_pb2.Error()
@@ -29,36 +10,35 @@ def error(reason):
 
 
 
-def addOffer(market, userID, request):
-	#TODO
-
+def addOffer(offerBook, userID, request):
+	#TODO: check userID not None
 	result = bl4p_proto_pb2.BL4P_AddOfferResult()
+	result.offerID = offerBook.addOffer(userID, Offer.fromPB2(request.offer))
 	return result
 
 
-def listOffers(market, userID, request):
-	#TODO
+def listOffers(offerBook, userID, request):
+	#TODO: check userID not None
 	result = bl4p_proto_pb2.BL4P_ListOffersResult()
-	for ID, offer in dummyOrderBook.items():
+	for offerID, offer in offerBook.listOffers(userID).items():
 		item = result.offers.add()
-		item.offerID = ID
+		item.offerID = offerID
 		item.offer.CopyFrom(offer.toPB2())
 	return result
 
 
-def removeOffer(market, userID, request):
-	#TODO
-
+def removeOffer(offerBook, userID, request):
+	#TODO: check userID not None
+	#TODO: handle exception
+	offerBook.removeOffer(userID, request.offerID)
 	result = bl4p_proto_pb2.BL4P_RemoveOfferResult()
 	return result
 
 
-def findOffers(market, userID, request):
-	query = Offer.fromBP2(request.query)
-
-	#TODO
+def findOffers(offerBook, userID, request):
+	#TODO: check userID not None
 	result = bl4p_proto_pb2.BL4P_FindOffersResult()
-	for offer in dummyOrderBook.values():
+	for offer in offerBook.findOffers(Offer.fromPB2(request.query)):
 		offer_pb2 = result.offers.add()
 		offer_pb2.CopyFrom(offer.toPB2())
 	return result
@@ -71,7 +51,7 @@ def makeClosure(function, firstArg):
 	return closure
 
 
-def registerRPC(server, market):
+def registerRPC(server, offerBook):
 	functionData = \
 	{
 	bl4p_proto_pb2.BL4P_AddOffer    : addOffer,
@@ -82,5 +62,5 @@ def registerRPC(server, market):
 
 	for requestType, function in functionData.items():
 		server.registerRPCFunction(requestType,
-			makeClosure(function, market))
+			makeClosure(function, offerBook))
 

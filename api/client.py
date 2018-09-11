@@ -15,7 +15,7 @@ def Asset(max_amount, max_amount_divisor, currency, exchange):
 
 class Offer:
 	@staticmethod
-	def fromBP2(pb2):
+	def fromPB2(pb2):
 		ret = Offer(pb2.bid, pb2.ask, pb2.address)
 
 		Condition = offers_pb2.Offer.Condition
@@ -174,7 +174,7 @@ class Bl4pApi:
 		result = self.apiCall(request)
 		return \
 		[
-		Offer.fromBP2(offer_PB2)
+		Offer.fromPB2(offer_PB2)
 		for offer_PB2 in result.offers
 		]
 
