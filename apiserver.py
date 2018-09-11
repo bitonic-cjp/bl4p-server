@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 
 import websockets
 
@@ -78,6 +79,7 @@ class APIServer:
 						result = function(userID, request)
 					except Exception as e:
 						print('Something unexpected went wrong: ', str(e))
+						print(traceback.format_exc())
 						result = bl4p_proto_pb2.Error()
 						result.reason = bl4p_proto_pb2._Unknown
 
