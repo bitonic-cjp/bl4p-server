@@ -157,7 +157,7 @@ class Bl4pApi:
 		result = self.apiCall(request)
 		return \
 		{
-		item.offerID: item.offer
+		item.offerID: Offer.fromPB2(item.offer)
 		for item in result.offers
 		}
 
