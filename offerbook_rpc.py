@@ -11,7 +11,9 @@ def error(reason):
 
 
 def addOffer(offerBook, userID, request):
-	#TODO: check userID not None
+	if userID is None:
+		return error(bl4p_proto_pb2._Unauthorized)
+
 	result = bl4p_proto_pb2.BL4P_AddOfferResult()
 	result.offerID = offerBook.addOffer(
 		userID=userID,
@@ -21,7 +23,9 @@ def addOffer(offerBook, userID, request):
 
 
 def listOffers(offerBook, userID, request):
-	#TODO: check userID not None
+	if userID is None:
+		return error(bl4p_proto_pb2._Unauthorized)
+
 	result = bl4p_proto_pb2.BL4P_ListOffersResult()
 	data = offerBook.listOffers(
 		userID=userID
@@ -34,7 +38,9 @@ def listOffers(offerBook, userID, request):
 
 
 def removeOffer(offerBook, userID, request):
-	#TODO: check userID not None
+	if userID is None:
+		return error(bl4p_proto_pb2._Unauthorized)
+
 	#TODO: handle exception
 	offerBook.removeOffer(
 		userID=userID,
@@ -45,7 +51,6 @@ def removeOffer(offerBook, userID, request):
 
 
 def findOffers(offerBook, userID, request):
-	#TODO: check userID not None
 	result = bl4p_proto_pb2.BL4P_FindOffersResult()
 	data = offerBook.findOffers(
 		query=Offer.fromPB2(request.query)

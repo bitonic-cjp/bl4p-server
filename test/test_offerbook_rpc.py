@@ -92,10 +92,9 @@ class TestOfferBookRPC(unittest.TestCase):
 			request.offer
 			)
 
-		#TODO
-		#offerBook.startTransaction.reset_mock()
-		#result = offerbook_rpc.addOffer(offerBook, userID=None, request=request)
-		#self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+		offerBook.addOffer.reset_mock()
+		result = offerbook_rpc.addOffer(offerBook, userID=None, request=request)
+		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 
 	def test_listOffers(self):
@@ -120,10 +119,9 @@ class TestOfferBookRPC(unittest.TestCase):
 			userID=4
 			)
 
-		#TODO
-		#bl4p.processSenderAck.reset_mock()
-		#result = offerbook_rpc.listOffers(offerBook, userID=None, request=request)
-		#self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+		offerBook.listOffers.reset_mock()
+		result = offerbook_rpc.listOffers(offerBook, userID=None, request=request)
+		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 
 	def test_removeOffer(self):
@@ -141,10 +139,9 @@ class TestOfferBookRPC(unittest.TestCase):
 			offerID=42
 			)
 
-		#TODO
-		#bl4p.processSenderAck.reset_mock()
-		#result = offerbook_rpc.removeOffer(offerBook, userID=None, request=request)
-		#self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+		offerBook.removeOffer.reset_mock()
+		result = offerbook_rpc.removeOffer(offerBook, userID=None, request=request)
+		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 
 	@patch('offerbook_rpc.Offer')
