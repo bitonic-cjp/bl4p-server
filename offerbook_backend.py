@@ -1,8 +1,13 @@
 import copy
 
+from api.offer import Offer
+
 
 
 def offersMatch(o1, o2):
+	o1 = Offer.fromPB2(o1)
+	o2 = Offer.fromPB2(o2)
+
 	#Must be matching currency and exchange:
 	if \
 		o1.bid.currency != o2.ask.currency or \
@@ -12,13 +17,11 @@ def offersMatch(o1, o2):
 			return False
 
 	#All condition ranges must overlap
-	conditions1 = {c.key: (c.min_value, c.max_value) for c in o1.conditions}
-	conditions2 = {c.key: (c.min_value, c.max_value) for c in o2.conditions}
-	commonKeys = set(conditions1.keys()) & set(conditions2.keys())
+	commonKeys = set(o1.conditions.keys()) & set(o2.conditions.keys())
 	testOverlap = lambda r1, r2: r1[0] <= r2[1] and r2[0] <= r1[1]
 	overlaps = \
 	(
-	testOverlap(conditions1[key], conditions2[key])
+	testOverlap(o1.conditions[key], o2.conditions[key])
 	for key in commonKeys
 	)
 	if False in overlaps:
