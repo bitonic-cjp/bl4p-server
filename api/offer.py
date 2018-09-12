@@ -57,3 +57,41 @@ class Offer:
 			condition.key = key
 			condition.min_value, condition.max_value = minmax
 		return ret
+
+
+	def matches(self, other):
+		#Must be matching currency and exchange:
+		if \
+			self.bid.currency != other.ask.currency or \
+			self.bid.exchange != other.ask.exchange or \
+			self.ask.currency != other.bid.currency or \
+			self.ask.exchange != other.bid.exchange:
+				return False
+
+		#All condition ranges must overlap
+		commonKeys = set(self.conditions.keys()) & set(other.conditions.keys())
+		testOverlap = lambda r1, r2: r1[0] <= r2[1] and r2[0] <= r1[1]
+		overlaps = \
+		(
+		testOverlap(self.conditions[key], o2.conditions[key])
+		for key in commonKeys
+		)
+		if False in overlaps:
+			return False
+
+		#Must have compatible limit rates
+		#One should bid at least as much as the other asks.
+		#    bid1 / ask1 >= ask2 / bid2
+		#    bid1 * bid2 >= ask1 * ask2
+		#    (bid1 / bid1_div) * (bid2 / bid2_div) >= (ask1 / ask1_div) * (ask2 / ask2_div)
+		#    bid1 * bid2 * ask1_div * ask2_div >= ask1 * ask2 * bid1_div * bid2_div
+
+		#Implementation note: multiplying all these numbers together may give quite large results.
+		#The correctness may well depend on Python's unlimited-size integers.
+		return \
+			self.bid.max_amount * other.bid.max_amount * \
+			self.ask.max_amount_divisor * other.ask.max_amount_divisor \
+				>= \
+			self.ask.max_amount * other.ask.max_amount * \
+			self.bid.max_amount_divisor * other.bid.max_amount_divisor
+
