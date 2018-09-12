@@ -18,15 +18,9 @@ class Offer:
 	def fromPB2(pb2):
 		ret = Offer(pb2.bid, pb2.ask, pb2.address)
 
-		Condition = offers_pb2.Offer.Condition
 		for condition in pb2.conditions:
-			minmax = (condition.min_value, condition.max_value)
-			if condition.key == Condition.CLTV_EXPIRY_DELTA:
-				ret.cltv_expiry_delta = minmax
-			elif condition.key == Condition.LOCKED_TIMEOUT:
-				ret.locked_timeout = minmax
-			else:
-				raise Exception('Unknown condition type')
+			ret.conditions[condition.key] = \
+				(condition.min_value, condition.max_value)
 
 		return ret
 
@@ -40,8 +34,12 @@ class Offer:
 		self.bid = bid
 		self.ask = ask
 		self.address = address
-		self.cltv_expiry_delta = cltv_expiry_delta
-		self.locked_timeout = locked_timeout
+		self.conditions = {}
+		Condition = offers_pb2.Offer.Condition
+		if cltv_expiry_delta is not None:
+			self.conditions[Condition.CLTV_EXPIRY_DELTA] = cltv_expiry_delta
+		if locked_timeout is not None:
+			self.conditions[Condition.LOCKED_TIMEOUT] = locked_timeout
 
 
 	def __eq__(self, other):
@@ -55,16 +53,10 @@ class Offer:
 		ret.address = self.address
 
 		Condition = offers_pb2.Offer.Condition
-		conditions = \
-		{
-		Condition.CLTV_EXPIRY_DELTA: self.cltv_expiry_delta,
-		Condition.LOCKED_TIMEOUT   : self.locked_timeout,
-		}
-		for key, minmax in conditions.items():
-			if minmax is not None:
-				condition = ret.conditions.add()
-				condition.key = key
-				condition.min_value, condition.max_value = minmax
+		for key, minmax in self.conditions.items():
+			condition = ret.conditions.add()
+			condition.key = key
+			condition.min_value, condition.max_value = minmax
 		return ret
 
 
