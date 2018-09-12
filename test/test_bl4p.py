@@ -6,7 +6,8 @@ import urllib.request
 
 sys.path.append('..')
 
-from api.client import Bl4pApi, Asset, Offer
+from api.client import Bl4pApi
+from api.offer import Asset, Offer
 import bl4p
 
 

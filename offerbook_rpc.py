@@ -1,5 +1,5 @@
 from api import bl4p_proto_pb2
-from api.client import Offer, Asset
+from api.offer import Offer
 
 
 
