@@ -13,14 +13,20 @@ def error(reason):
 def addOffer(offerBook, userID, request):
 	#TODO: check userID not None
 	result = bl4p_proto_pb2.BL4P_AddOfferResult()
-	result.offerID = offerBook.addOffer(userID, Offer.fromPB2(request.offer))
+	result.offerID = offerBook.addOffer(
+		userID=userID,
+		offer=Offer.fromPB2(request.offer)
+		)
 	return result
 
 
 def listOffers(offerBook, userID, request):
 	#TODO: check userID not None
 	result = bl4p_proto_pb2.BL4P_ListOffersResult()
-	for offerID, offer in offerBook.listOffers(userID).items():
+	data = offerBook.listOffers(
+		userID=userID
+		)
+	for offerID, offer in data.items():
 		item = result.offers.add()
 		item.offerID = offerID
 		item.offer.CopyFrom(offer.toPB2())
@@ -30,7 +36,10 @@ def listOffers(offerBook, userID, request):
 def removeOffer(offerBook, userID, request):
 	#TODO: check userID not None
 	#TODO: handle exception
-	offerBook.removeOffer(userID, request.offerID)
+	offerBook.removeOffer(
+		userID=userID,
+		offerID=request.offerID
+		)
 	result = bl4p_proto_pb2.BL4P_RemoveOfferResult()
 	return result
 
@@ -38,7 +47,10 @@ def removeOffer(offerBook, userID, request):
 def findOffers(offerBook, userID, request):
 	#TODO: check userID not None
 	result = bl4p_proto_pb2.BL4P_FindOffersResult()
-	for offer in offerBook.findOffers(Offer.fromPB2(request.query)):
+	data = offerBook.findOffers(
+		query=Offer.fromPB2(request.query)
+		)
+	for offer in data:
 		offer_pb2 = result.offers.add()
 		offer_pb2.CopyFrom(offer.toPB2())
 	return result
