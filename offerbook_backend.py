@@ -1,13 +1,8 @@
 import copy
 
-from api.offer import Offer
-
 
 
 def offersMatch(o1, o2):
-	o1 = Offer.fromPB2(o1)
-	o2 = Offer.fromPB2(o2)
-
 	#Must be matching currency and exchange:
 	if \
 		o1.bid.currency != o2.ask.currency or \
