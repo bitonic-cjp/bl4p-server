@@ -7,6 +7,12 @@ import offerbook_backend
 
 
 
+class DummyQuery:
+	def matches(self, offer):
+		return offer.startswith('foo')
+
+
+
 class TestOfferBook(unittest.TestCase):
 	def setUp(self):
 		self.offerBook = offerbook_backend.OfferBook()
@@ -36,6 +42,17 @@ class TestOfferBook(unittest.TestCase):
 		self.assertNotEqual(baz, bar)
 		self.assertEqual(self.offerBook.listOffers(userID),
 			{bar: 'bar', baz: 'baz'})
+
+
+	def test_findOffers(self):
+		self.offerBook.addOffer(3, 'foobar')
+		self.offerBook.addOffer(3, 'bar')
+		self.offerBook.addOffer(4, 'foobaz')
+		self.offerBook.addOffer(4, 'baz')
+		found = self.offerBook.findOffers(DummyQuery())
+		self.assertEqual(len(found), 2)
+		self.assertTrue('foobar' in found)
+		self.assertTrue('foobaz' in found)
 
 
 
