@@ -41,11 +41,14 @@ def removeOffer(offerBook, userID, request):
 	if userID is None:
 		return error(bl4p_proto_pb2._Unauthorized)
 
-	#TODO: handle exception
-	offerBook.removeOffer(
-		userID=userID,
-		offerID=request.offerID
-		)
+	try:
+		offerBook.removeOffer(
+			userID=userID,
+			offerID=request.offerID
+			)
+	except offerBook.OfferNotFound:
+		return error(bl4p_proto_pb2._NoSuchOrder)
+
 	result = bl4p_proto_pb2.BL4P_RemoveOfferResult()
 	return result
 

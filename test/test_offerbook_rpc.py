@@ -20,7 +20,9 @@ class MockServer:
 
 
 class MockOfferBook(Mock):
-	pass #TODO: exception classes, if needed
+	class OfferNotFound(Exception):
+		pass
+
 
 
 class MockOffer(Mock):
@@ -138,6 +140,13 @@ class TestOfferBookRPC(unittest.TestCase):
 			userID=4,
 			offerID=42
 			)
+
+		#Exceptions
+		for xc in [offerBook.OfferNotFound()]:
+			offerBook.removeOffer.reset_mock()
+			offerBook.removeOffer.side_effect=xc
+			result = offerbook_rpc.removeOffer(offerBook, userID=4, request=request)
+			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
 
 		offerBook.removeOffer.reset_mock()
 		result = offerbook_rpc.removeOffer(offerBook, userID=None, request=request)

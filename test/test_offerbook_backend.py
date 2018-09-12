@@ -43,6 +43,9 @@ class TestOfferBook(unittest.TestCase):
 		self.assertEqual(self.offerBook.listOffers(userID),
 			{bar: 'bar', baz: 'baz'})
 
+		with self.assertRaises(self.offerBook.OfferNotFound):
+			self.offerBook.removeOffer(userID, foo)
+
 
 	def test_findOffers(self):
 		self.offerBook.addOffer(3, 'foobar')

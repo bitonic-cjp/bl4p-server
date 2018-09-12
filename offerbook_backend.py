@@ -36,6 +36,10 @@ class OfferBook:
 	atomic database transactions.
 	'''
 
+	class OfferNotFound(Exception):
+		pass
+
+
 	def __init__(self):
 		self.data = {}
 
@@ -49,7 +53,10 @@ class OfferBook:
 
 
 	def removeOffer(self, userID, offerID):
-		return self.getUserData(userID).removeOffer(offerID)
+		try:
+			return self.getUserData(userID).removeOffer(offerID)
+		except KeyError:
+			raise OfferBook.OfferNotFound()
 
 
 	def findOffers(self, query):
