@@ -73,7 +73,7 @@ class Offer:
 		testOverlap = lambda r1, r2: r1[0] <= r2[1] and r2[0] <= r1[1]
 		overlaps = \
 		(
-		testOverlap(self.conditions[key], o2.conditions[key])
+		testOverlap(self.conditions[key], other.conditions[key])
 		for key in commonKeys
 		)
 		if False in overlaps:
