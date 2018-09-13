@@ -4,7 +4,7 @@ import traceback
 import websockets
 
 from api.serialization import serialize, deserialize
-from api import bl4p_proto_pb2
+from api import bl4p_pb2
 
 
 
@@ -72,16 +72,16 @@ class RPCServer:
 					function = self.RPCFunctions[request.__class__]
 				except KeyError:
 					print('Received unsupported request type')
-					result = bl4p_proto_pb2.Error()
-					result.reason = bl4p_proto_pb2._MalformedRequest
+					result = bl4p_pb2.Error()
+					result.reason = bl4p_pb2._MalformedRequest
 				else:
 					try:
 						result = function(userID, request)
 					except Exception as e:
 						print('Something unexpected went wrong: ', str(e))
 						print(traceback.format_exc())
-						result = bl4p_proto_pb2.Error()
-						result.reason = bl4p_proto_pb2._Unknown
+						result = bl4p_pb2.Error()
+						result.reason = bl4p_pb2._Unknown
 
 					#After a function call, time-outs may have changed:
 					self.manageTimeouts()

@@ -1,7 +1,7 @@
 .PHONY: proto
 
-proto: bl4p_proto.proto offers.proto
-	protoc --python_out=. bl4p_proto.proto offers.proto
+proto: bl4p.proto offers.proto
+	protoc --python_out=. bl4p.proto offers.proto
 
 	# Fix generated imports
 	#See https://github.com/protocolbuffers/protobuf/issues/1491

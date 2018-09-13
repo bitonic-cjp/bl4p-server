@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 
 sys.path.append('..')
 
-from api import bl4p_proto_pb2, offers_pb2
+from api import bl4p_pb2, offers_pb2
 import offerbook_rpc
 
 
@@ -44,10 +44,10 @@ class TestOfferBookRPC(unittest.TestCase):
 	def test_registerRPC(self, mock_findOffers, mock_removeOffer, mock_listOffers, mock_addOffer):
 		mocks = \
 		{
-		bl4p_proto_pb2.BL4P_AddOffer   : mock_addOffer,
-		bl4p_proto_pb2.BL4P_ListOffers : mock_listOffers,
-		bl4p_proto_pb2.BL4P_RemoveOffer: mock_removeOffer,
-		bl4p_proto_pb2.BL4P_FindOffers : mock_findOffers,
+		bl4p_pb2.BL4P_AddOffer   : mock_addOffer,
+		bl4p_pb2.BL4P_ListOffers : mock_listOffers,
+		bl4p_pb2.BL4P_RemoveOffer: mock_removeOffer,
+		bl4p_pb2.BL4P_FindOffers : mock_findOffers,
 		}
 
 		server = MockServer()
@@ -85,7 +85,7 @@ class TestOfferBookRPC(unittest.TestCase):
 			return_value=42
 			)
 		result = offerbook_rpc.addOffer(offerBook, userID=4, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_AddOfferResult))
+		self.assertTrue(isinstance(result, bl4p_pb2.BL4P_AddOfferResult))
 		self.assertEqual(result.offerID, 42)
 		offerBook.addOffer.assert_called_once_with(
 			userID=4, offer='fromPB2'
@@ -96,7 +96,7 @@ class TestOfferBookRPC(unittest.TestCase):
 
 		offerBook.addOffer.reset_mock()
 		result = offerbook_rpc.addOffer(offerBook, userID=None, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+		self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 
 	def test_listOffers(self):
@@ -111,7 +111,7 @@ class TestOfferBookRPC(unittest.TestCase):
 			return_value={42: o1, 43: o2}
 			)
 		result = offerbook_rpc.listOffers(offerBook, userID=4, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_ListOffersResult))
+		self.assertTrue(isinstance(result, bl4p_pb2.BL4P_ListOffersResult))
 		self.assertEqual(len(result.offers), 2)
 		for item in result.offers:
 			self.assertTrue(item.offerID in [42, 43])
@@ -123,7 +123,7 @@ class TestOfferBookRPC(unittest.TestCase):
 
 		offerBook.listOffers.reset_mock()
 		result = offerbook_rpc.listOffers(offerBook, userID=None, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+		self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 
 	def test_removeOffer(self):
@@ -135,7 +135,7 @@ class TestOfferBookRPC(unittest.TestCase):
 		#Successfull call
 		offerBook.removeOffer = Mock()
 		result = offerbook_rpc.removeOffer(offerBook, userID=4, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_RemoveOfferResult))
+		self.assertTrue(isinstance(result, bl4p_pb2.BL4P_RemoveOfferResult))
 		offerBook.removeOffer.assert_called_once_with(
 			userID=4,
 			offerID=42
@@ -146,11 +146,11 @@ class TestOfferBookRPC(unittest.TestCase):
 			offerBook.removeOffer.reset_mock()
 			offerBook.removeOffer.side_effect=xc
 			result = offerbook_rpc.removeOffer(offerBook, userID=4, request=request)
-			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+			self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 		offerBook.removeOffer.reset_mock()
 		result = offerbook_rpc.removeOffer(offerBook, userID=None, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+		self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 
 	@patch('offerbook_rpc.Offer')
@@ -170,7 +170,7 @@ class TestOfferBookRPC(unittest.TestCase):
 			return_value=[o1, o2]
 			)
 		result = offerbook_rpc.findOffers(offerBook, userID=4, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_FindOffersResult))
+		self.assertTrue(isinstance(result, bl4p_pb2.BL4P_FindOffersResult))
 		self.assertEqual(len(result.offers), 2)
 		offerBook.findOffers.assert_called_once_with(
 			query='fromPB2'

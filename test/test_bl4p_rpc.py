@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 
 sys.path.append('..')
 
-from api import bl4p_proto_pb2
+from api import bl4p_pb2
 import bl4p_rpc
 
 
@@ -54,10 +54,10 @@ class TestBL4PRPC(unittest.TestCase):
 	def test_registerRPC(self, mock_getStatus, mock_receive, mock_send, mock_start):
 		mocks = \
 		{
-		bl4p_proto_pb2.BL4P_Start    : mock_start,
-		bl4p_proto_pb2.BL4P_Send     : mock_send,
-		bl4p_proto_pb2.BL4P_Receive  : mock_receive,
-		bl4p_proto_pb2.BL4P_GetStatus: mock_getStatus,
+		bl4p_pb2.BL4P_Start    : mock_start,
+		bl4p_pb2.BL4P_Send     : mock_send,
+		bl4p_pb2.BL4P_Receive  : mock_receive,
+		bl4p_pb2.BL4P_GetStatus: mock_getStatus,
 		}
 
 		server = MockServer()
@@ -95,7 +95,7 @@ class TestBL4PRPC(unittest.TestCase):
 			return_value=(100, 99, b'\x00\xff')
 			)
 		result = bl4p_rpc.start(bl4p, userID=4, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_StartResult))
+		self.assertTrue(isinstance(result, bl4p_pb2.BL4P_StartResult))
 		self.assertEqual(result.sender_amount.amount, 100)
 		self.assertEqual(result.receiver_amount.amount, 99)
 		self.assertEqual(result.payment_hash.data, b'\x00\xff')
@@ -108,11 +108,11 @@ class TestBL4PRPC(unittest.TestCase):
 			bl4p.startTransaction.reset_mock()
 			bl4p.startTransaction.side_effect=xc
 			result = bl4p_rpc.start(bl4p, userID=4, request=request)
-			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+			self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 		bl4p.startTransaction.reset_mock()
 		result = bl4p_rpc.start(bl4p, userID=None, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+		self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 
 	def test_send(self):
@@ -127,7 +127,7 @@ class TestBL4PRPC(unittest.TestCase):
 			return_value=b'\x00\xff'
 			)
 		result = bl4p_rpc.send(bl4p, userID=4, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_SendResult))
+		self.assertTrue(isinstance(result, bl4p_pb2.BL4P_SendResult))
 		self.assertEqual(result.payment_preimage.data, b'\x00\xff')
 		bl4p.processSenderAck.assert_called_once_with(
 			sender_userid=4, amount=5, paymentHash=6
@@ -138,11 +138,11 @@ class TestBL4PRPC(unittest.TestCase):
 			bl4p.processSenderAck.reset_mock()
 			bl4p.processSenderAck.side_effect=xc
 			result = bl4p_rpc.send(bl4p, userID=4, request=request)
-			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+			self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 		bl4p.processSenderAck.reset_mock()
 		result = bl4p_rpc.send(bl4p, userID=None, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+		self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 
 	def test_receive(self):
@@ -154,7 +154,7 @@ class TestBL4PRPC(unittest.TestCase):
 		#Successfull call
 		bl4p.processReceiverClaim = Mock()
 		result = bl4p_rpc.receive(bl4p, userID=4, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_ReceiveResult))
+		self.assertTrue(isinstance(result, bl4p_pb2.BL4P_ReceiveResult))
 		bl4p.processReceiverClaim.assert_called_once_with(
 			paymentPreimage=5
 			)
@@ -164,7 +164,7 @@ class TestBL4PRPC(unittest.TestCase):
 			bl4p.processReceiverClaim.reset_mock()
 			bl4p.processReceiverClaim.side_effect=xc
 			result = bl4p_rpc.receive(bl4p, userID=4, request=request)
-			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+			self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 
 	def test_getStatus(self):
@@ -178,8 +178,8 @@ class TestBL4PRPC(unittest.TestCase):
 			return_value='completed'
 			)
 		result = bl4p_rpc.getStatus(bl4p, userID=4, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.BL4P_GetStatusResult))
-		self.assertEqual(result.status, bl4p_proto_pb2._completed)
+		self.assertTrue(isinstance(result, bl4p_pb2.BL4P_GetStatusResult))
+		self.assertEqual(result.status, bl4p_pb2._completed)
 		bl4p.getTransactionStatus.assert_called_once_with(
 			userid=4, paymentHash=5
 			)
@@ -189,11 +189,11 @@ class TestBL4PRPC(unittest.TestCase):
 			bl4p.getTransactionStatus.reset_mock()
 			bl4p.getTransactionStatus.side_effect=xc
 			result = bl4p_rpc.getStatus(bl4p, userID=4, request=request)
-			self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+			self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 		bl4p.getTransactionStatus.reset_mock()
 		result = bl4p_rpc.getStatus(bl4p, userID=None, request=request)
-		self.assertTrue(isinstance(result, bl4p_proto_pb2.Error))
+		self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 
 

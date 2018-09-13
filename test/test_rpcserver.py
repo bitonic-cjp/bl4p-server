@@ -8,7 +8,7 @@ sys.path.append('..')
 
 import rpcserver
 from api.client import Bl4pApi
-from api import bl4p_proto_pb2
+from api import bl4p_pb2
 
 
 
@@ -51,7 +51,7 @@ class TestRPCServer(unittest.TestCase):
 		self.callLog = []
 		self.generateException = False
 		self.server.registerRPCFunction(
-			bl4p_proto_pb2.BL4P_Start,
+			bl4p_pb2.BL4P_Start,
 			self.APIFunction
 			)
 
@@ -67,7 +67,7 @@ class TestRPCServer(unittest.TestCase):
 		self.callLog.append((userID, request))
 		if self.generateException:
 			raise Exception('(intended) test exception')
-		ret = bl4p_proto_pb2.BL4P_StartResult()
+		ret = bl4p_pb2.BL4P_StartResult()
 		ret.payment_hash.data = b'\x00\xff'
 		return ret
 

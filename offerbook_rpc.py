@@ -1,10 +1,10 @@
-from api import bl4p_proto_pb2
+from api import bl4p_pb2
 from api.offer import Offer
 
 
 
 def error(reason):
-	result = bl4p_proto_pb2.Error()
+	result = bl4p_pb2.Error()
 	result.reason = reason
 	return result
 
@@ -12,9 +12,9 @@ def error(reason):
 
 def addOffer(offerBook, userID, request):
 	if userID is None:
-		return error(bl4p_proto_pb2._Unauthorized)
+		return error(bl4p_pb2._Unauthorized)
 
-	result = bl4p_proto_pb2.BL4P_AddOfferResult()
+	result = bl4p_pb2.BL4P_AddOfferResult()
 	result.offerID = offerBook.addOffer(
 		userID=userID,
 		offer=Offer.fromPB2(request.offer)
@@ -24,9 +24,9 @@ def addOffer(offerBook, userID, request):
 
 def listOffers(offerBook, userID, request):
 	if userID is None:
-		return error(bl4p_proto_pb2._Unauthorized)
+		return error(bl4p_pb2._Unauthorized)
 
-	result = bl4p_proto_pb2.BL4P_ListOffersResult()
+	result = bl4p_pb2.BL4P_ListOffersResult()
 	data = offerBook.listOffers(
 		userID=userID
 		)
@@ -39,7 +39,7 @@ def listOffers(offerBook, userID, request):
 
 def removeOffer(offerBook, userID, request):
 	if userID is None:
-		return error(bl4p_proto_pb2._Unauthorized)
+		return error(bl4p_pb2._Unauthorized)
 
 	try:
 		offerBook.removeOffer(
@@ -47,14 +47,14 @@ def removeOffer(offerBook, userID, request):
 			offerID=request.offerID
 			)
 	except offerBook.OfferNotFound:
-		return error(bl4p_proto_pb2._NoSuchOrder)
+		return error(bl4p_pb2._NoSuchOrder)
 
-	result = bl4p_proto_pb2.BL4P_RemoveOfferResult()
+	result = bl4p_pb2.BL4P_RemoveOfferResult()
 	return result
 
 
 def findOffers(offerBook, userID, request):
-	result = bl4p_proto_pb2.BL4P_FindOffersResult()
+	result = bl4p_pb2.BL4P_FindOffersResult()
 	data = offerBook.findOffers(
 		query=Offer.fromPB2(request.query)
 		)
@@ -74,10 +74,10 @@ def makeClosure(function, firstArg):
 def registerRPC(server, offerBook):
 	functionData = \
 	{
-	bl4p_proto_pb2.BL4P_AddOffer    : addOffer,
-	bl4p_proto_pb2.BL4P_ListOffers  : listOffers,
-	bl4p_proto_pb2.BL4P_RemoveOffer : removeOffer,
-	bl4p_proto_pb2.BL4P_FindOffers  : findOffers,
+	bl4p_pb2.BL4P_AddOffer    : addOffer,
+	bl4p_pb2.BL4P_ListOffers  : listOffers,
+	bl4p_pb2.BL4P_RemoveOffer : removeOffer,
+	bl4p_pb2.BL4P_FindOffers  : findOffers,
 	}
 
 	for requestType, function in functionData.items():

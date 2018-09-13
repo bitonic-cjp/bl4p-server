@@ -1,6 +1,6 @@
 import websocket
 
-from . import bl4p_proto_pb2
+from . import bl4p_pb2
 from .offer import Offer
 from .serialization import serialize, deserialize
 
@@ -43,7 +43,7 @@ class Bl4pApi:
 		self.lastRequestID += 1
 
 
-		if isinstance(result, bl4p_proto_pb2.Error):
+		if isinstance(result, bl4p_pb2.Error):
 			#TODO: include error code
 			raise Bl4pApi.Error('An error was received')
 
@@ -51,7 +51,7 @@ class Bl4pApi:
 
 
 	def start(self, amount, sender_timeout_delta_ms, receiver_pays_fee):
-		request = bl4p_proto_pb2.BL4P_Start()
+		request = bl4p_pb2.BL4P_Start()
 		request.amount.amount = amount
 		request.sender_timeout_delta_ms = sender_timeout_delta_ms
 		request.receiver_pays_fee = receiver_pays_fee
@@ -60,7 +60,7 @@ class Bl4pApi:
 
 
 	def send(self, sender_amount, payment_hash):
-		request = bl4p_proto_pb2.BL4P_Send()
+		request = bl4p_pb2.BL4P_Send()
 		request.sender_amount.amount = sender_amount
 		request.payment_hash.data = payment_hash
 		result = self.apiCall(request)
@@ -68,33 +68,33 @@ class Bl4pApi:
 
 
 	def receive(self, payment_preimage):
-		request = bl4p_proto_pb2.BL4P_Receive()
+		request = bl4p_pb2.BL4P_Receive()
 		request.payment_preimage.data = payment_preimage
 		self.apiCall(request)
 
 
 	def getStatus(self, payment_hash):
-		request = bl4p_proto_pb2.BL4P_GetStatus()
+		request = bl4p_pb2.BL4P_GetStatus()
 		request.payment_hash.data = payment_hash
 		result = self.apiCall(request)
 		return \
 		{
-		bl4p_proto_pb2._waiting_for_sender  : 'waiting_for_sender',
-		bl4p_proto_pb2._waiting_for_receiver: 'waiting_for_receiver',
-		bl4p_proto_pb2._sender_timeout      : 'sender_timeout',
-		bl4p_proto_pb2._receiver_timeout    : 'receiver_timeout',
-		bl4p_proto_pb2._completed           : 'completed',
+		bl4p_pb2._waiting_for_sender  : 'waiting_for_sender',
+		bl4p_pb2._waiting_for_receiver: 'waiting_for_receiver',
+		bl4p_pb2._sender_timeout      : 'sender_timeout',
+		bl4p_pb2._receiver_timeout    : 'receiver_timeout',
+		bl4p_pb2._completed           : 'completed',
 		}[result.status]
 
 
 	def addOffer(self, offer):
-		request = bl4p_proto_pb2.BL4P_AddOffer()
+		request = bl4p_pb2.BL4P_AddOffer()
 		request.offer.CopyFrom(offer.toPB2())
 		return self.apiCall(request).offerID
 
 
 	def listOffers(self):
-		request = bl4p_proto_pb2.BL4P_ListOffers()
+		request = bl4p_pb2.BL4P_ListOffers()
 		result = self.apiCall(request)
 		return \
 		{
@@ -104,13 +104,13 @@ class Bl4pApi:
 
 
 	def removeOffer(self, offerID):
-		request = bl4p_proto_pb2.BL4P_RemoveOffer()
+		request = bl4p_pb2.BL4P_RemoveOffer()
 		request.offerID = offerID
 		self.apiCall(request)
 
 
 	def findOffers(self, query):
-		request = bl4p_proto_pb2.BL4P_FindOffers()
+		request = bl4p_pb2.BL4P_FindOffers()
 		request.query.CopyFrom(query.toPB2())
 		result = self.apiCall(request)
 		return \
