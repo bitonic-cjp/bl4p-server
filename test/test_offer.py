@@ -3,7 +3,7 @@ import unittest
 
 sys.path.append('..')
 
-from api import offers_pb2
+from api import offer_pb2
 from api import offer
 
 
@@ -11,7 +11,7 @@ from api import offer
 class TestOffer(unittest.TestCase):
 	def test_Asset(self):
 		asset = offer.Asset(max_amount=1, max_amount_divisor=10, currency='btc', exchange='ln')
-		self.assertTrue(isinstance(asset, offers_pb2.Offer.Asset))
+		self.assertTrue(isinstance(asset, offer_pb2.Offer.Asset))
 		self.assertEqual(asset.max_amount, 1)
 		self.assertEqual(asset.max_amount_divisor, 10)
 		self.assertEqual(asset.currency, 'btc')
@@ -39,13 +39,13 @@ class TestOffer(unittest.TestCase):
 		self.assertEqual(o.address, 'fubar')
 		self.assertEqual(o.conditions,
 			{
-			offers_pb2.Offer.Condition.CLTV_EXPIRY_DELTA: 'cltv_range',
-			offers_pb2.Offer.Condition.LOCKED_TIMEOUT   : 'timeout_range',
+			offer_pb2.Offer.Condition.CLTV_EXPIRY_DELTA: 'cltv_range',
+			offer_pb2.Offer.Condition.LOCKED_TIMEOUT   : 'timeout_range',
 			})
 
 
 	def test_fromPB2(self):
-		pb2 = offers_pb2.Offer()
+		pb2 = offer_pb2.Offer()
 		pb2.bid.max_amount = 1
 		pb2.bid.max_amount_divisor = 10
 		pb2.bid.currency = 'btc'
@@ -56,11 +56,11 @@ class TestOffer(unittest.TestCase):
 		pb2.ask.exchange = 'bl3p.eu'
 		pb2.address = 'fubar'
 		c1 = pb2.conditions.add()
-		c1.key = offers_pb2.Offer.Condition.CLTV_EXPIRY_DELTA
+		c1.key = offer_pb2.Offer.Condition.CLTV_EXPIRY_DELTA
 		c1.min_value = 2
 		c1.max_value = 3
 		c2 = pb2.conditions.add()
-		c2.key = offers_pb2.Offer.Condition.LOCKED_TIMEOUT
+		c2.key = offer_pb2.Offer.Condition.LOCKED_TIMEOUT
 		c2.min_value = 4
 		c2.max_value = 5
 
@@ -75,8 +75,8 @@ class TestOffer(unittest.TestCase):
 		self.assertEqual(o.ask.exchange, 'bl3p.eu')
 		self.assertEqual(o.address, 'fubar')
 		self.assertEqual(o.conditions, {
-			offers_pb2.Offer.Condition.CLTV_EXPIRY_DELTA: (2, 3),
-			offers_pb2.Offer.Condition.LOCKED_TIMEOUT: (4, 5),
+			offer_pb2.Offer.Condition.CLTV_EXPIRY_DELTA: (2, 3),
+			offer_pb2.Offer.Condition.LOCKED_TIMEOUT: (4, 5),
 			})
 
 

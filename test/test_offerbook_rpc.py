@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 
 sys.path.append('..')
 
-from api import bl4p_pb2, offers_pb2
+from api import bl4p_pb2, offer_pb2
 import offerbook_rpc
 
 
@@ -30,7 +30,7 @@ class MockOffer(Mock):
 		Mock.__init__(self)
 		self.conditions = {}
 		self.toPB2 = Mock(
-			return_value=offers_pb2.Offer()
+			return_value=offer_pb2.Offer()
 			)
 
 

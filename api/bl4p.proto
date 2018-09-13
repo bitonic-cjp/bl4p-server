@@ -47,7 +47,7 @@ syntax = "proto3";
     Requests are handled asynchronously, and responses may be received in any order.
 */
 
-import "offers.proto";
+import "offer.proto";
 
 enum MessageType {
     Msg_Error = 0;

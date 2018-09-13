@@ -1,9 +1,9 @@
-from . import offers_pb2
+from . import offer_pb2
 
 
 
 def Asset(max_amount, max_amount_divisor, currency, exchange):
-	ret = offers_pb2.Offer.Asset()
+	ret = offer_pb2.Offer.Asset()
 	ret.max_amount = max_amount
 	ret.max_amount_divisor = max_amount_divisor
 	ret.currency = currency
@@ -34,7 +34,7 @@ class Offer:
 		self.ask = ask
 		self.address = address
 		self.conditions = {}
-		Condition = offers_pb2.Offer.Condition
+		Condition = offer_pb2.Offer.Condition
 		if cltv_expiry_delta is not None:
 			self.conditions[Condition.CLTV_EXPIRY_DELTA] = cltv_expiry_delta
 		if locked_timeout is not None:
@@ -46,12 +46,12 @@ class Offer:
 
 
 	def toPB2(self):
-		ret = offers_pb2.Offer()
+		ret = offer_pb2.Offer()
 		ret.bid.CopyFrom(self.bid)
 		ret.ask.CopyFrom(self.ask)
 		ret.address = self.address
 
-		Condition = offers_pb2.Offer.Condition
+		Condition = offer_pb2.Offer.Condition
 		for key, minmax in self.conditions.items():
 			condition = ret.conditions.add()
 			condition.key = key
