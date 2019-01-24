@@ -32,7 +32,8 @@ class TestOffer(unittest.TestCase):
 			bid='foo', ask='bar',
 			address='fubar',
 			cltv_expiry_delta='cltv_range',
-			locked_timeout='timeout_range'
+			sender_timeout = 'sender_timeout_range',
+			locked_timeout='locked_timeout_range'
 			)
 		self.assertEqual(o.bid, 'foo')
 		self.assertEqual(o.ask, 'bar')
@@ -40,7 +41,8 @@ class TestOffer(unittest.TestCase):
 		self.assertEqual(o.conditions,
 			{
 			offer_pb2.Offer.Condition.CLTV_EXPIRY_DELTA: 'cltv_range',
-			offer_pb2.Offer.Condition.LOCKED_TIMEOUT   : 'timeout_range',
+			offer_pb2.Offer.Condition.SENDER_TIMEOUT   : 'sender_timeout_range',
+			offer_pb2.Offer.Condition.LOCKED_TIMEOUT   : 'locked_timeout_range',
 			})
 
 
@@ -60,9 +62,13 @@ class TestOffer(unittest.TestCase):
 		c1.min_value = 2
 		c1.max_value = 3
 		c2 = pb2.conditions.add()
-		c2.key = offer_pb2.Offer.Condition.LOCKED_TIMEOUT
+		c2.key = offer_pb2.Offer.Condition.SENDER_TIMEOUT
 		c2.min_value = 4
 		c2.max_value = 5
+		c3 = pb2.conditions.add()
+		c3.key = offer_pb2.Offer.Condition.LOCKED_TIMEOUT
+		c3.min_value = 6
+		c3.max_value = 7
 
 		o = offer.Offer.fromPB2(pb2)
 		self.assertEqual(o.bid.max_amount, 1)
@@ -76,7 +82,8 @@ class TestOffer(unittest.TestCase):
 		self.assertEqual(o.address, 'fubar')
 		self.assertEqual(o.conditions, {
 			offer_pb2.Offer.Condition.CLTV_EXPIRY_DELTA: (2, 3),
-			offer_pb2.Offer.Condition.LOCKED_TIMEOUT: (4, 5),
+			offer_pb2.Offer.Condition.SENDER_TIMEOUT: (4, 5),
+			offer_pb2.Offer.Condition.LOCKED_TIMEOUT: (6, 7),
 			})
 
 
@@ -86,7 +93,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			address='fubar',
 			cltv_expiry_delta=(2, 3),
-			locked_timeout=(4, 5),
+			sender_timeout=(4, 5),
+			locked_timeout=(6, 7),
 			)
 
 		pb2 = o.toPB2()
@@ -115,7 +123,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			address='fubar',
 			cltv_expiry_delta=(2, 3),
-			locked_timeout=(4, 5),
+			sender_timeout=(4, 5),
+			locked_timeout=(6, 7),
 			)
 
 		self.assertTrue(o == offer.Offer(
@@ -123,7 +132,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			address='fubar',
 			cltv_expiry_delta=(2, 3),
-			locked_timeout=(4, 5),
+			sender_timeout=(4, 5),
+			locked_timeout=(6, 7),
 			))
 
 		self.assertFalse(o == offer.Offer(
@@ -131,7 +141,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			address='fubar',
 			cltv_expiry_delta=(2, 3),
-			locked_timeout=(4, 5),
+			sender_timeout=(4, 5),
+			locked_timeout=(6, 7),
 			))
 
 		self.assertFalse(o == offer.Offer(
@@ -139,7 +150,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=6000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'), #different
 			address='fubar',
 			cltv_expiry_delta=(2, 3),
-			locked_timeout=(4, 5),
+			sender_timeout=(4, 5),
+			locked_timeout=(6, 7),
 			))
 
 		self.assertFalse(o == offer.Offer(
@@ -147,7 +159,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			address='foobar', #different
 			cltv_expiry_delta=(2, 3),
-			locked_timeout=(4, 5),
+			sender_timeout=(4, 5),
+			locked_timeout=(6, 7),
 			))
 
 		self.assertFalse(o == offer.Offer(
@@ -155,7 +168,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			address='fubar',
 			cltv_expiry_delta=(2, 2), #different
-			locked_timeout=(4, 5),
+			sender_timeout=(4, 5),
+			locked_timeout=(6, 7),
 			))
 
 		self.assertFalse(o == offer.Offer(
@@ -163,7 +177,17 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			address='fubar',
 			cltv_expiry_delta=(2, 3),
-			locked_timeout=(3, 5), #different
+			sender_timeout=(3, 5), #different
+			locked_timeout=(6, 7),
+			))
+
+		self.assertFalse(o == offer.Offer(
+			bid=offer.Asset(max_amount=1   , max_amount_divisor=10 , currency='btc', exchange='ln'),
+			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
+			address='fubar',
+			cltv_expiry_delta=(2, 3),
+			sender_timeout=(4, 5),
+			locked_timeout=(5, 7), #different
 			))
 
 		self.assertFalse(o == offer.Offer(
@@ -171,7 +195,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			address='fubar',
 			#different
-			locked_timeout=(4, 5),
+			sender_timeout=(4, 5),
+			locked_timeout=(6, 7),
 			))
 
 		self.assertFalse(o == offer.Offer(
@@ -179,6 +204,16 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			address='fubar',
 			cltv_expiry_delta=(2, 3),
+			#different
+			locked_timeout=(6, 7),
+			))
+
+		self.assertFalse(o == offer.Offer(
+			bid=offer.Asset(max_amount=1   , max_amount_divisor=10 , currency='btc', exchange='ln'),
+			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
+			address='fubar',
+			cltv_expiry_delta=(2, 3),
+			sender_timeout=(4, 5),
 			#different
 			))
 
@@ -189,7 +224,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			)
 
 		matches = \
@@ -200,7 +236,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Other address:
@@ -208,7 +245,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='foobar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Bids more:
@@ -216,7 +254,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Other bid divisor:
@@ -224,7 +263,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Asks less:
@@ -232,7 +272,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=9   , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Other ask divisor:
@@ -240,21 +281,32 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=100  , max_amount_divisor=1000, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#No CLTV specification
 			bid=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
-			#No timeout specification
+			#No sender timeout specification
 			bid=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
+			locked_timeout=(60, 70),
+			),
+		offer.Offer(
+			#No locked timeout specification
+			bid=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
+			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
+			address='fubar',
+			cltv_expiry_delta=(20, 30),
+			sender_timeout=(40, 50),
 			),
 		offer.Offer(
 			#CLTV range shifted up
@@ -262,7 +314,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(25, 35),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#CLTV range shifted down
@@ -270,7 +323,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(15, 25),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		]
 		nonMatches = \
@@ -281,7 +335,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Wrong bid currency
@@ -289,7 +344,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Wrong ask currency
@@ -297,7 +353,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='ltc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Wrong bid exchange
@@ -305,7 +362,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Wrong ask exchange
@@ -313,7 +371,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange=''),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Bids less
@@ -321,7 +380,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Bids less, other bid divisor
@@ -329,7 +389,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10   , max_amount_divisor=100 , currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Asks more
@@ -337,7 +398,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=20  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#Asks more, other ask divisor
@@ -345,7 +407,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=2   , max_amount_divisor=10 , currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(20, 30),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#CLTV range shifted up
@@ -353,7 +416,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(35, 45),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		offer.Offer(
 			#CLTV range shifted down
@@ -361,7 +425,8 @@ class TestOffer(unittest.TestCase):
 			ask=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
 			address='fubar',
 			cltv_expiry_delta=(5, 15),
-			locked_timeout=(40, 50),
+			sender_timeout=(40, 50),
+			locked_timeout=(60, 70),
 			),
 		]
 
