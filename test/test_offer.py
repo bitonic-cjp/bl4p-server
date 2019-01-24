@@ -218,6 +218,16 @@ class TestOffer(unittest.TestCase):
 			))
 
 
+	def test_str(self):
+		o = offer.Offer(
+			bid=offer.Asset(max_amount=1   , max_amount_divisor=10 , currency='btc', exchange='ln'),
+			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
+			address='fubar',
+			)
+		s = str(o)
+		self.assertEqual(type(s), str)
+
+
 	def test_matches(self):
 		o1 = offer.Offer(
 			bid=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
