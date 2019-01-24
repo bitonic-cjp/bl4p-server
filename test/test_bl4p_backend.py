@@ -36,7 +36,7 @@ class TestBL4P(unittest.TestCase):
 		self.setBalance(self.receiverID, 200)
 
 		#Receiver:
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		self.assertEqual(senderAmount,  100) #not affected by fee
 		self.assertEqual(receiverAmount, 99) #fee subtracted
 		self.assertEqual(self.getBalance(self.senderID), 500)
@@ -63,7 +63,7 @@ class TestBL4P(unittest.TestCase):
 		self.setBalance(self.receiverID, 200)
 
 		#Receiver:
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=False)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=False)
 		self.assertEqual(senderAmount,   101) #fee added
 		self.assertEqual(receiverAmount, 100) #not affected by fee
 		self.assertEqual(self.getBalance(self.senderID), 500)
@@ -90,7 +90,7 @@ class TestBL4P(unittest.TestCase):
 		self.setBalance(self.receiverID, 200)
 
 		#Receiver:
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=0.1, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.1, lockedTimeout=5000, receiverPaysFee=True)
 
 		#Sender:
 		time.sleep(0.2)
@@ -101,12 +101,11 @@ class TestBL4P(unittest.TestCase):
 
 
 	def test_badFlow_receiverTimeout(self):
-		self.bl4p.receiverTimeDelta = 0.1
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
 
 		#Receiver:
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=0.05, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.05, lockedTimeout=0.1, receiverPaysFee=True)
 
 		#Sender:
 		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
@@ -121,7 +120,7 @@ class TestBL4P(unittest.TestCase):
 
 	def test_startTransaction_UserNotFound(self):
 		with self.assertRaises(self.bl4p.UserNotFound):
-			self.bl4p.startTransaction(1312, amount=100, timeDelta=5, receiverPaysFee=True)
+			self.bl4p.startTransaction(1312, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 
 
 	def test_startTransaction_InsufficientAmount(self):
@@ -130,24 +129,29 @@ class TestBL4P(unittest.TestCase):
 
 		for amount in [-1, 0, 1]:
 			with self.assertRaises(self.bl4p.InsufficientAmount):
-				self.bl4p.startTransaction(self.receiverID, amount=amount, timeDelta=5, receiverPaysFee=True)
+				self.bl4p.startTransaction(self.receiverID, amount=amount, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 
-		self.bl4p.startTransaction(self.receiverID, amount=2, timeDelta=5, receiverPaysFee=True)
+		self.bl4p.startTransaction(self.receiverID, amount=2, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 
 		for amount in [-1, 0]:
 			with self.assertRaises(self.bl4p.InsufficientAmount):
-				self.bl4p.startTransaction(self.receiverID, amount=amount, timeDelta=5, receiverPaysFee=False)
+				self.bl4p.startTransaction(self.receiverID, amount=amount, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=False)
 
-		self.bl4p.startTransaction(self.receiverID, amount=1, timeDelta=5, receiverPaysFee=False)
+		self.bl4p.startTransaction(self.receiverID, amount=1, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=False)
 
 
-	def test_startTransaction_InvalidTimeDelta(self):
-		with self.assertRaises(self.bl4p.InvalidTimeDelta):
-			self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=-0.1, receiverPaysFee=True)
+	def test_startTransaction_InvalidSenderTimeout(self):
+		with self.assertRaises(self.bl4p.InvalidTimeout):
+			self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=-0.1, lockedTimeout=5000, receiverPaysFee=True)
+
+
+	def test_startTransaction_InvalidLockedTimeout(self):
+		with self.assertRaises(self.bl4p.InvalidTimeout):
+			self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=-0.1, receiverPaysFee=True)
 
 
 	def test_processSenderAck_UserNotFound(self):
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		with self.assertRaises(self.bl4p.UserNotFound):
 			self.bl4p.processSenderAck(1312, amount=senderAmount, paymentHash=paymentHash)
 
@@ -159,19 +163,19 @@ class TestBL4P(unittest.TestCase):
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p.processSenderAck(self.senderID, amount=100, paymentHash=b'x'*32)
 
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=0.01, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.01, lockedTimeout=5000, receiverPaysFee=True)
 		time.sleep(0.1)
 		self.assertEqual(self.bl4p.processTimeouts(), None)
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 		self.bl4p.processReceiverClaim(paymentPreimage)
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p.processSenderAck(self.senderID, amount=senderAmount+1, paymentHash=paymentHash)
 
@@ -180,13 +184,13 @@ class TestBL4P(unittest.TestCase):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
 
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=501, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=501, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		self.assertEqual(senderAmount, 501)
 		with self.assertRaises(self.bl4p.InsufficientFunds):
 			self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 			self.assertEqual(self.getBalance(self.senderID), 500)
 
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=500, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=500, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		self.assertEqual(senderAmount, 500)
 		self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 		self.assertEqual(self.getBalance(self.senderID), 0)
@@ -196,7 +200,7 @@ class TestBL4P(unittest.TestCase):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
 
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		paymentPreimage1 = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 		self.assertEqual(self.getBalance(self.senderID), 400)
 
@@ -216,12 +220,12 @@ class TestBL4P(unittest.TestCase):
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p.processReceiverClaim(b'x'*32)
 
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		paymentPreimage = self.bl4p.transactions[paymentHash].preimage
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p.processReceiverClaim(paymentPreimage)
 
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=0.01, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.01, lockedTimeout=5000, receiverPaysFee=True)
 		paymentPreimage = self.bl4p.transactions[paymentHash].preimage
 		time.sleep(0.1)
 		self.bl4p.processTimeouts()
@@ -230,7 +234,7 @@ class TestBL4P(unittest.TestCase):
 
 		self.assertEqual(self.getBalance(self.receiverID), 200)
 
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
 		self.bl4p.processReceiverClaim(paymentPreimage)
 
@@ -243,7 +247,7 @@ class TestBL4P(unittest.TestCase):
 
 
 	def test_getTransactionStatus_UserNotFound(self):
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		with self.assertRaises(self.bl4p.UserNotFound):
 			self.bl4p.getTransactionStatus(1312, paymentHash=paymentHash)
 
@@ -252,7 +256,7 @@ class TestBL4P(unittest.TestCase):
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p.getTransactionStatus(self.receiverID, paymentHash='xxx')
 
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=5, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p.getTransactionStatus(self.senderID, paymentHash=paymentHash)
 
@@ -263,10 +267,10 @@ class TestBL4P(unittest.TestCase):
 
 		#Timeout sequence
 
-		senderAmount, receiverAmount, paymentHash1 = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=2, receiverPaysFee=True)
-		senderAmount, receiverAmount, paymentHash2 = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=1, receiverPaysFee=True)
-		senderAmount, receiverAmount, paymentHash3 = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=2, receiverPaysFee=True)
-		senderAmount, receiverAmount, paymentHash4 = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=3, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash1 = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=2, lockedTimeout=5000, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash2 = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=1, lockedTimeout=5000, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash3 = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=2, lockedTimeout=5000, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash4 = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=3, lockedTimeout=5000, receiverPaysFee=True)
 
 		time.sleep(0.5)
 		ret = self.bl4p.processTimeouts()
@@ -306,8 +310,7 @@ class TestBL4P(unittest.TestCase):
 
 		#processTimeouts should be a NOP in these cases:
 
-		self.bl4p.receiverTimeDelta = 0.1
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, timeDelta=0.1, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.1, lockedTimeout=0.1, receiverPaysFee=True)
 		time.sleep(0.05)
 
 		statusBefore = self.getTransactionStatus(paymentHash)
@@ -337,11 +340,11 @@ class TestBL4P(unittest.TestCase):
 		for amount in [2, 10, 1000, 10000]:
 			expectedFee = 1 + (25*amount) // 10000
 
-			senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=amount, timeDelta=5, receiverPaysFee=True)
+			senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=amount, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 			self.assertEqual(senderAmount,  amount)
 			self.assertEqual(receiverAmount, amount - expectedFee)
 
-			senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=amount, timeDelta=5, receiverPaysFee=False)
+			senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=amount, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=False)
 			self.assertEqual(senderAmount,  amount + expectedFee)
 			self.assertEqual(receiverAmount, amount)
 

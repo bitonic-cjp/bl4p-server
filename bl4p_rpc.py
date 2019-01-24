@@ -18,14 +18,15 @@ def start(bl4p, userID, request):
 			bl4p.startTransaction(
 				receiver_userid=userID,
 				amount=request.amount.amount,
-				timeDelta=request.sender_timeout_delta_ms / 1000.0,
+				senderTimeout=request.sender_timeout_delta_ms / 1000.0,
+				lockedTimeout=request.locked_timeout_delta_s,
 				receiverPaysFee=request.receiver_pays_fee
 				)
 	except bl4p.UserNotFound:
 		return error(bl4p_pb2._InvalidAccount)
 	except bl4p.InsufficientAmount:
 		return error(bl4p_pb2._InvalidAmount)
-	except bl4p.InvalidTimeDelta:
+	except bl4p.InvalidTimeout:
 		return error(bl4p_pb2._InvalidAmount)
 
 	result = bl4p_pb2.BL4P_StartResult()

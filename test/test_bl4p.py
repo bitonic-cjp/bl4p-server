@@ -65,7 +65,7 @@ class TestBL4P(unittest.TestCase):
 			self.assertEqual(status, expectedStatus)
 
 		#Receiver:
-		senderAmount, receiverAmount, paymentHash = self.receiver.start(amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=True)
+		senderAmount, receiverAmount, paymentHash = self.receiver.start(amount=100, sender_timeout_delta_ms=5000, locked_timeout_delta_s=5000, receiver_pays_fee=True)
 		self.assertEqual(senderAmount,  100) #not affected by fee
 		self.assertEqual(receiverAmount, 99) #fee subtracted
 		assertStatus(self.receiver, paymentHash, 'waiting_for_sender')

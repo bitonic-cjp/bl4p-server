@@ -74,7 +74,7 @@ class TestRPCServer(unittest.TestCase):
 
 	def test_successfullCall(self):
 		senderAmount, receiverAmount, paymentHash = self.client.start(
-			amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=False)
+			amount=100, sender_timeout_delta_ms=5000, locked_timeout_delta_s=5000, receiver_pays_fee=False)
 
 		self.assertEqual(paymentHash, b'\x00\xff')
 
@@ -89,7 +89,7 @@ class TestRPCServer(unittest.TestCase):
 
 		with self.assertRaises(Bl4pApi.Error):
 			self.client.start(
-				amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=False)
+				amount=100, sender_timeout_delta_ms=5000, locked_timeout_delta_s=5000, receiver_pays_fee=False)
 
 		self.assertEqual(len(self.callLog), 1)
 		userID, request = self.callLog[0]
@@ -102,7 +102,7 @@ class TestRPCServer(unittest.TestCase):
 		self.client = Bl4pApi('ws://localhost:8000/', '3', 'wrong')
 
 		senderAmount, receiverAmount, paymentHash = self.client.start(
-			amount=100, sender_timeout_delta_ms=5000, receiver_pays_fee=False)
+			amount=100, sender_timeout_delta_ms=5000, locked_timeout_delta_s=5000, receiver_pays_fee=False)
 
 		self.assertEqual(paymentHash, b'\x00\xff')
 

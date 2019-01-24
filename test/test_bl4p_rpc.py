@@ -36,7 +36,7 @@ class MockBL4P(Mock):
 		pass
 
 
-	class InvalidTimeDelta(Exception):
+	class InvalidTimeout(Exception):
 		pass
 
 
@@ -88,7 +88,8 @@ class TestBL4PRPC(unittest.TestCase):
 		request = Mock()
 		request.amount.amount = 5
 		request.sender_timeout_delta_ms = 6
-		request.receiver_pays_fee = 7
+		request.locked_timeout_delta_s = 7
+		request.receiver_pays_fee = 8
 
 		#Successfull call
 		bl4p.startTransaction = Mock(
@@ -100,11 +101,11 @@ class TestBL4PRPC(unittest.TestCase):
 		self.assertEqual(result.receiver_amount.amount, 99)
 		self.assertEqual(result.payment_hash.data, b'\x00\xff')
 		bl4p.startTransaction.assert_called_once_with(
-			receiver_userid=4, amount=5, timeDelta=6/1000.0, receiverPaysFee=7
+			receiver_userid=4, amount=5, senderTimeout=6/1000.0, lockedTimeout=7, receiverPaysFee=8
 			)
 
 		#Exceptions
-		for xc in [bl4p.UserNotFound(), bl4p.InsufficientAmount(), bl4p.InvalidTimeDelta()]:
+		for xc in [bl4p.UserNotFound(), bl4p.InsufficientAmount(), bl4p.InvalidTimeout()]:
 			bl4p.startTransaction.reset_mock()
 			bl4p.startTransaction.side_effect=xc
 			result = bl4p_rpc.start(bl4p, userID=4, request=request)

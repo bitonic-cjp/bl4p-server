@@ -48,7 +48,7 @@ class BL4P:
 		pass
 
 
-	class InvalidTimeDelta(Exception):
+	class InvalidTimeout(Exception):
 		pass
 
 
@@ -63,9 +63,6 @@ class BL4P:
 		#1 + 0.25% fee:
 		self.fee_rate = decimal.Decimal('0.0025')
 		self.fee_base = 1
-
-		#One month time-out for receiver:
-		self.receiverTimeDelta = 30 * 24 * 3600.0
 
 
 	def getUser(self, userid):
@@ -110,13 +107,14 @@ class BL4P:
 		return ret
 
 
-	def startTransaction(self, receiver_userid, amount, timeDelta, receiverPaysFee):
+	def startTransaction(self, receiver_userid, amount, senderTimeout, lockedTimeout, receiverPaysFee):
 		'''
 		Start a new transaction.
 
 		:param receiver_userid: the user ID of the receiver
 		:param amount: the amount to be transfered from sender to receiver
-		:param timeDelta: the maximum time for the sender to respond, in seconds
+		:param senderTimeout: the maximum time for the sender to respond, in seconds
+		:param lockedTimeout: the maximum time until a locked transaction goes back to sender, in seconds
 		:param receiverPaysFee: indicates whether receiver or sender pays the fee
 
 		:returns: tuple (sender amount, receiver amount, payment hash)
@@ -141,15 +139,18 @@ class BL4P:
 		if amountOutgoing <= 0:
 			raise BL4P.InsufficientAmount()
 
-		if timeDelta <= 0.0:
-			raise BL4P.InvalidTimeDelta()
+		if senderTimeout <= 0.0: #TODO: also specify maximum
+			raise BL4P.InvalidTimeout()
+
+		if lockedTimeout <= 0.0: #TODO: also specify maximum
+			raise BL4P.InvalidTimeout()
 
 		preimage = os.urandom(32) #TODO: HD wallet instead?
 		paymentHash = sha256(preimage)
 
 		currentTime = time.time()
-		senderTimeout = currentTime + timeDelta
-		receiverTimeout = currentTime + self.receiverTimeDelta
+		senderTimeout = currentTime + senderTimeout
+		receiverTimeout = currentTime + lockedTimeout
 
 		tx = Transaction(
 			sender_userid = None,
