@@ -64,6 +64,9 @@ class BL4P:
 		self.fee_rate = decimal.Decimal('0.0025')
 		self.fee_base = 1
 
+		self.maxLockedTimeout = 366 * 24 * 3600 #one year
+		self.minTimeBetweenTimeouts = 1         #one second
+
 
 	def getUser(self, userid):
 		'''
@@ -139,10 +142,10 @@ class BL4P:
 		if amountOutgoing <= 0:
 			raise BL4P.InsufficientAmount()
 
-		if senderTimeout <= 0.0: #TODO: also specify maximum
+		if lockedTimeout <= 0.0 or lockedTimeout > self.maxLockedTimeout:
 			raise BL4P.InvalidTimeout()
 
-		if lockedTimeout <= 0.0: #TODO: also specify maximum
+		if senderTimeout <= 0.0 or senderTimeout > lockedTimeout - self.minTimeBetweenTimeouts:
 			raise BL4P.InvalidTimeout()
 
 		preimage = os.urandom(32) #TODO: HD wallet instead?

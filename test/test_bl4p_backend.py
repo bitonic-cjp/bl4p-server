@@ -103,6 +103,7 @@ class TestBL4P(unittest.TestCase):
 	def test_badFlow_receiverTimeout(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
+		self.bl4p.minTimeBetweenTimeouts = 0.01
 
 		#Receiver:
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.05, lockedTimeout=0.1, receiverPaysFee=True)
@@ -144,10 +145,16 @@ class TestBL4P(unittest.TestCase):
 		with self.assertRaises(self.bl4p.InvalidTimeout):
 			self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=-0.1, lockedTimeout=5000, receiverPaysFee=True)
 
+		with self.assertRaises(self.bl4p.InvalidTimeout):
+			self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5000, lockedTimeout=5000, receiverPaysFee=True)
+
 
 	def test_startTransaction_InvalidLockedTimeout(self):
 		with self.assertRaises(self.bl4p.InvalidTimeout):
 			self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=-0.1, receiverPaysFee=True)
+
+		with self.assertRaises(self.bl4p.InvalidTimeout):
+			self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=40000000, receiverPaysFee=True)
 
 
 	def test_processSenderAck_UserNotFound(self):
@@ -264,6 +271,7 @@ class TestBL4P(unittest.TestCase):
 	def test_processTimeouts(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
+		self.bl4p.minTimeBetweenTimeouts = 0.01
 
 		#Timeout sequence
 
@@ -310,7 +318,7 @@ class TestBL4P(unittest.TestCase):
 
 		#processTimeouts should be a NOP in these cases:
 
-		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.1, lockedTimeout=0.1, receiverPaysFee=True)
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.1, lockedTimeout=0.2, receiverPaysFee=True)
 		time.sleep(0.05)
 
 		statusBefore = self.getTransactionStatus(paymentHash)
