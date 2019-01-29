@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import traceback
 
 import websockets
@@ -71,15 +72,15 @@ class RPCServer:
 				try:
 					function = self.RPCFunctions[request.__class__]
 				except KeyError:
-					print('Received unsupported request type')
+					logging.warning('Received unsupported request type')
 					result = bl4p_pb2.Error()
 					result.reason = bl4p_pb2._MalformedRequest
 				else:
 					try:
 						result = function(userID, request)
 					except Exception as e:
-						print('Something unexpected went wrong: ', str(e))
-						print(traceback.format_exc())
+						logging.error('Something unexpected went wrong: ' + str(e))
+						logging.error(traceback.format_exc())
 						result = bl4p_pb2.Error()
 						result.reason = bl4p_pb2._Unknown
 

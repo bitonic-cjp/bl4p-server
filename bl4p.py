@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 
+import logging
+
 import bl4p_backend
 import bl4p_rpc
 import offerbook_backend
 import offerbook_rpc
 import rpcserver
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)s: %(message)s',
+    level=logging.INFO
+)
 
 server = rpcserver.RPCServer()
 

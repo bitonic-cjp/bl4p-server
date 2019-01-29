@@ -1,5 +1,6 @@
 import decimal
 import hashlib
+import logging
 import os
 import time
 
@@ -140,12 +141,35 @@ class BL4P:
 			amountOutgoing = amount
 
 		if amountOutgoing <= 0:
+			logging.warning(
+				'startTransaction: insufficient amount (incoming: %d; outgoing: %d)' % \
+				(amountIncoming, amountOutgoing))
 			raise BL4P.InsufficientAmount()
 
-		if lockedTimeout <= 0.0 or lockedTimeout > self.maxLockedTimeout:
+		if lockedTimeout <= 0.0:
+			logging.warning('startTransaction: invalid locked timeout (%f <= 0)' % \
+				lockedTimeout
+				)
 			raise BL4P.InvalidTimeout()
 
-		if senderTimeout <= 0.0 or senderTimeout > lockedTimeout - self.minTimeBetweenTimeouts:
+		if lockedTimeout > self.maxLockedTimeout:
+			logging.warning('startTransaction: invalid locked timeout (%f > %f)' % \
+				(lockedTimeout, self.maxLockedTimeout)
+				)
+			raise BL4P.InvalidTimeout()
+
+		if senderTimeout <= 0.0:
+			logging.warning(
+				'startTransaction: invalid sender timeout (%f <= 0)' % \
+				senderTimeout
+				)
+			raise BL4P.InvalidTimeout()
+
+		if senderTimeout > lockedTimeout - self.minTimeBetweenTimeouts:
+			logging.warning(
+				'startTransaction: invalid sender timeout (%f > %f)' % \
+				(senderTimeout, lockedTimeout - self.minTimeBetweenTimeouts)
+				)
 			raise BL4P.InvalidTimeout()
 
 		preimage = os.urandom(32) #TODO: HD wallet instead?
@@ -309,13 +333,13 @@ class BL4P:
 
 
 	def processSenderTimeout(self, tx):
-		print('Sender time-out happened')
+		logging.info('Sender time-out happened')
 		assert tx.status == TransactionStatus.waiting_for_sender
 		tx.status = TransactionStatus.sender_timeout
 
 
 	def processReceiverTimeout(self, tx):
-		print('Receiver time-out happened')
+		logging.info('Receiver time-out happened')
 		assert tx.status == TransactionStatus.waiting_for_receiver
 
 		tx.status = TransactionStatus.receiver_timeout
