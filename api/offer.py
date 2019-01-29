@@ -52,8 +52,8 @@ class Offer:
 			bid, ask,
 			address,
 			cltv_expiry_delta = None, #None or (min, max)
-			sender_timeout = None,    #None or (min, max)
-			locked_timeout = None,    #None or (min, max)
+			sender_timeout = None,    #None or (min, max), milliseconds
+			locked_timeout = None,    #None or (min, max), seconds
 			):
 		self.bid = bid
 		self.ask = ask
