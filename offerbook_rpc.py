@@ -15,10 +15,15 @@ def addOffer(offerBook, userID, request):
 		return error(bl4p_pb2._Unauthorized)
 
 	result = bl4p_pb2.BL4P_AddOfferResult()
-	result.offerID = offerBook.addOffer(
-		userID=userID,
-		offer=Offer.fromPB2(request.offer)
-		)
+
+	try:
+		result.offerID = offerBook.addOffer(
+			userID=userID,
+			offer=Offer.fromPB2(request.offer)
+			)
+	except offerBook.InvalidOffer:
+		return error(bl4p_pb2._NoSuchOrder)
+
 	return result
 
 

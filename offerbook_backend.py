@@ -36,6 +36,9 @@ class OfferBook:
 	atomic database transactions.
 	'''
 
+	class InvalidOffer(Exception):
+		pass
+
 	class OfferNotFound(Exception):
 		pass
 
@@ -45,6 +48,13 @@ class OfferBook:
 
 
 	def addOffer(self, userID, offer):
+		#Sensibility check:
+		#For all conditions, max >= min
+		for k, v in offer.conditions.items():
+			minimum, maximum = v
+			if maximum < minimum:
+				raise OfferBook.InvalidOffer()
+
 		return self.getUserData(userID).addOffer(offer)
 
 

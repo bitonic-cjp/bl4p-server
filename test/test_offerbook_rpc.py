@@ -20,6 +20,9 @@ class MockServer:
 
 
 class MockOfferBook(Mock):
+	class InvalidOffer(Exception):
+		pass
+
 	class OfferNotFound(Exception):
 		pass
 
@@ -93,6 +96,13 @@ class TestOfferBookRPC(unittest.TestCase):
 		mock_Offer.fromPB2.assert_called_once_with(
 			request.offer
 			)
+
+		#Exceptions
+		for xc in [offerBook.InvalidOffer()]:
+			offerBook.addOffer.reset_mock()
+			offerBook.addOffer.side_effect=xc
+			result = offerbook_rpc.addOffer(offerBook, userID=4, request=request)
+			self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 		offerBook.addOffer.reset_mock()
 		result = offerbook_rpc.addOffer(offerBook, userID=None, request=request)

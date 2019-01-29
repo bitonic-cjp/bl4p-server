@@ -7,9 +7,20 @@ import offerbook_backend
 
 
 
+class DummyOffer:
+	def __init__(self, name):
+		self.name = name
+		self.conditions = {}
+
+
+	def __eq__(self, o):
+		return o.name == self.name
+
+
+
 class DummyQuery:
 	def matches(self, offer):
-		return offer.startswith('foo')
+		return offer.name.startswith('foo')
 
 
 
@@ -21,41 +32,58 @@ class TestOfferBook(unittest.TestCase):
 	def test_offerManagement(self):
 		userID = 3
 
+		offers = DummyOffer('foo'), DummyOffer('bar'), DummyOffer('baz')
+
 		self.assertEqual(self.offerBook.listOffers(userID),
 			{})
 
-		foo = self.offerBook.addOffer(userID, 'foo')
+		foo = self.offerBook.addOffer(userID, offers[0])
 		self.assertEqual(self.offerBook.listOffers(userID),
-			{foo: 'foo'})
+			{foo: offers[0]})
 
-		bar = self.offerBook.addOffer(userID, 'bar')
+		bar = self.offerBook.addOffer(userID, offers[1])
 		self.assertNotEqual(bar, foo)
 		self.assertEqual(self.offerBook.listOffers(userID),
-			{foo: 'foo', bar: 'bar'})
+			{foo: offers[0], bar: offers[1]})
 
 		self.offerBook.removeOffer(userID, foo)
 		self.assertEqual(self.offerBook.listOffers(userID),
-			{bar: 'bar'})
+			{bar: offers[1]})
 
-		baz = self.offerBook.addOffer(userID, 'baz')
+		baz = self.offerBook.addOffer(userID, offers[2])
 		self.assertNotEqual(baz, foo)
 		self.assertNotEqual(baz, bar)
 		self.assertEqual(self.offerBook.listOffers(userID),
-			{bar: 'bar', baz: 'baz'})
+			{bar: offers[1], baz: offers[2]})
 
 		with self.assertRaises(self.offerBook.OfferNotFound):
 			self.offerBook.removeOffer(userID, foo)
 
 
+	def test_invalidOffer(self):
+		userID = 3
+
+		offer = DummyOffer('foo')
+		offer.conditions[0] = (3, 2) #min > max
+
+		with self.assertRaises(self.offerBook.InvalidOffer):
+			self.offerBook.addOffer(userID, offer)
+
+		self.assertEqual(self.offerBook.listOffers(userID),
+			{})
+
+
 	def test_findOffers(self):
-		self.offerBook.addOffer(3, 'foobar')
-		self.offerBook.addOffer(3, 'bar')
-		self.offerBook.addOffer(4, 'foobaz')
-		self.offerBook.addOffer(4, 'baz')
+		offers = DummyOffer('foobar'), DummyOffer('bar'), DummyOffer('foobaz'), DummyOffer('baz')
+
+		self.offerBook.addOffer(3, offers[0])
+		self.offerBook.addOffer(3, offers[1])
+		self.offerBook.addOffer(4, offers[2])
+		self.offerBook.addOffer(4, offers[3])
 		found = self.offerBook.findOffers(DummyQuery())
 		self.assertEqual(len(found), 2)
-		self.assertTrue('foobar' in found)
-		self.assertTrue('foobaz' in found)
+		self.assertTrue(offers[0] in found)
+		self.assertTrue(offers[2] in found)
 
 
 
