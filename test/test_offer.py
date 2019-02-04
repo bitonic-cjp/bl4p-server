@@ -228,6 +228,29 @@ class TestOffer(unittest.TestCase):
 		self.assertEqual(type(s), str)
 
 
+	def test_getConditionMin(self):
+		o = offer.Offer(
+			bid=offer.Asset(max_amount=1   , max_amount_divisor=10 , currency='btc', exchange='ln'),
+			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
+			address='fubar',
+			cltv_expiry_delta=(2, 3)
+			)
+		self.assertEqual(o.getConditionMin(offer_pb2.Offer.Condition.CLTV_EXPIRY_DELTA), 2)
+		self.assertEqual(o.getConditionMin(offer_pb2.Offer.Condition.SENDER_TIMEOUT), -(2**63))
+
+
+
+	def test_getConditionMax(self):
+		o = offer.Offer(
+			bid=offer.Asset(max_amount=1   , max_amount_divisor=10 , currency='btc', exchange='ln'),
+			ask=offer.Asset(max_amount=5000, max_amount_divisor=100, currency='eur', exchange='bl3p.eu'),
+			address='fubar',
+			cltv_expiry_delta=(2, 3)
+			)
+		self.assertEqual(o.getConditionMax(offer_pb2.Offer.Condition.CLTV_EXPIRY_DELTA), 3)
+		self.assertEqual(o.getConditionMax(offer_pb2.Offer.Condition.SENDER_TIMEOUT), 2**63 - 1)
+
+
 	def test_matches(self):
 		o1 = offer.Offer(
 			bid=offer.Asset(max_amount=10  , max_amount_divisor=100, currency='btc', exchange='ln'),
