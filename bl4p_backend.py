@@ -179,6 +179,11 @@ class BL4P:
 		senderTimeout = currentTime + senderTimeout
 		receiverTimeout = currentTime + lockedTimeout
 
+		logging.debug(
+			'startTransaction: amountIncoming: %d; amountOutgoing: %d' % \
+			(amountIncoming, amountOutgoing)
+			)
+
 		tx = Transaction(
 			sender_userid = None,
 			receiver_userid = receiver_userid,
@@ -216,6 +221,10 @@ class BL4P:
 			TransactionStatus.waiting_for_receiver
 			])
 		if tx.amountIncoming != amount:
+			logging.warning(
+				'processSenderAck: amount mismatch (is: %d; should be: %d)' % \
+				(amount, tx.amountIncoming)
+				)
 			raise BL4P.TransactionNotFound()
 
 		#In case of waiting_for_receiver, only send back data:
@@ -231,6 +240,7 @@ class BL4P:
 			#For this, it is necessary the preimage stays a secret
 			#between us and the sender.
 			if tx.sender_userid != sender_userid:
+				logging.warning('processSenderAck: userID mismatch on later call')
 				raise BL4P.TransactionNotFound()
 
 			#We're clear:
@@ -239,6 +249,7 @@ class BL4P:
 		#Otherwise (waiting_for_sender), take funds from the sender:
 		#This is the 1st call
 		if sender.balance < amount:
+			logging.warning('processSenderAck: insufficient funds')
 			raise BL4P.InsufficientFunds()
 
 		sender.balance -= amount
