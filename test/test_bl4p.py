@@ -88,6 +88,7 @@ class TestBL4P(unittest.TestCase):
 			bid = Asset(1, div_mBTC, 'btc', 'ln'),
 			ask = Asset(5, div_EUR , 'eur', 'bl3p.eu'),
 			address = 'foo',
+			ID = 42,
 			cltv_expiry_delta = (3, 4),
 			)
 
@@ -95,6 +96,7 @@ class TestBL4P(unittest.TestCase):
 			bid = Asset(5, div_EUR , 'eur', 'bl3p.eu'),
 			ask = Asset(1, div_mBTC, 'btc', 'ln'),
 			address = 'bar',
+			ID = 41,
 			locked_timeout = (5, 6),
 			)
 
