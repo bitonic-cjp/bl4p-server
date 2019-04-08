@@ -103,9 +103,16 @@ class BL4P:
 		try:
 			ret = self.transactions[paymentHash]
 		except KeyError:
+			logging.warning(
+				'getTransaction: payment hash not found'
+				)
 			raise BL4P.TransactionNotFound()
 
 		if acceptableStates is not None and ret.status not in acceptableStates:
+			logging.warning(
+				'getTransaction: payment is not in an acceptable state: state %s; acceptable %s' % \
+				(ret.status, str(acceptableStates))
+				)
 			raise BL4P.TransactionNotFound()
 
 		return ret
