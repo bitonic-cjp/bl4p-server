@@ -119,6 +119,51 @@ class TestBL4P(unittest.TestCase):
 		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'receiver_timeout')
 
 
+	def test_canceled_after_start(self):
+		self.setBalance(self.senderID, 500)
+		self.setBalance(self.receiverID, 200)
+
+		#Receiver:
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
+		self.assertEqual(senderAmount,  100) #not affected by fee
+		self.assertEqual(receiverAmount, 99) #fee subtracted
+		self.assertEqual(self.getBalance(self.senderID), 500)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_sender')
+
+		#Receiver:
+		self.bl4p.cancelTransaction(self.receiverID, paymentHash)
+		self.assertEqual(self.getBalance(self.senderID), 500)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'canceled')
+
+
+	def test_canceled_after_sent(self):
+		self.setBalance(self.senderID, 500)
+		self.setBalance(self.receiverID, 200)
+
+		#Receiver:
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
+		self.assertEqual(senderAmount,  100) #not affected by fee
+		self.assertEqual(receiverAmount, 99) #fee subtracted
+		self.assertEqual(self.getBalance(self.senderID), 500)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_sender')
+
+		#Sender:
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
+		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_receiver')
+		self.assertEqual(self.bl4p.getTransactionStatus(self.senderID, paymentHash), 'waiting_for_receiver')
+
+		#Receiver:
+		self.bl4p.cancelTransaction(self.receiverID, paymentHash)
+		self.assertEqual(self.getBalance(self.senderID), 500)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'canceled')
+
+
 	def test_startTransaction_UserNotFound(self):
 		with self.assertRaises(self.bl4p.UserNotFound):
 			self.bl4p.startTransaction(1312, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
@@ -155,6 +200,37 @@ class TestBL4P(unittest.TestCase):
 
 		with self.assertRaises(self.bl4p.InvalidTimeout):
 			self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=40000000, receiverPaysFee=True)
+
+
+	def test_cancelTransaction_TransactionNotFound(self):
+		self.setBalance(self.senderID, 500)
+		self.setBalance(self.receiverID, 200)
+
+		with self.assertRaises(self.bl4p.TransactionNotFound):
+			self.bl4p.cancelTransaction(self.receiverID, paymentHash=b'x'*32)
+
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
+		with self.assertRaises(self.bl4p.TransactionNotFound):
+			self.bl4p.cancelTransaction(self.senderID, paymentHash=paymentHash)
+
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.01, lockedTimeout=5000, receiverPaysFee=True)
+		time.sleep(0.1)
+		self.bl4p.processTimeouts()
+		with self.assertRaises(self.bl4p.TransactionNotFound):
+			self.bl4p.cancelTransaction(self.receiverID, paymentHash=paymentHash)
+
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.01, lockedTimeout=1.02, receiverPaysFee=True)
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
+		time.sleep(1.1)
+		self.bl4p.processTimeouts()
+		with self.assertRaises(self.bl4p.TransactionNotFound):
+			self.bl4p.cancelTransaction(self.receiverID, paymentHash=paymentHash)
+
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash)
+		self.bl4p.processReceiverClaim(paymentPreimage)
+		with self.assertRaises(self.bl4p.TransactionNotFound):
+			self.bl4p.cancelTransaction(self.receiverID, paymentHash=paymentHash)
 
 
 	def test_processSenderAck_UserNotFound(self):

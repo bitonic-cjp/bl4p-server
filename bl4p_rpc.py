@@ -36,6 +36,22 @@ def start(bl4p, userID, request):
 	return result
 
 
+def cancelStart(bl4p, userID, request):
+	if userID is None:
+		return error(bl4p_pb2._Unauthorized)
+
+	try:
+		bl4p.cancelTransaction(
+			receiver_userid=userID,
+			paymentHash=request.payment_hash.data
+			)
+	except bl4p.TransactionNotFound:
+		return error(bl4p_pb2._NoSuchOrder)
+
+	result = bl4p_pb2.BL4P_CancelStartResult()
+	return result
+
+
 def send(bl4p, userID, request):
 	if userID is None:
 		return error(bl4p_pb2._Unauthorized)
@@ -93,6 +109,7 @@ def getStatus(bl4p, userID, request):
 	'sender_timeout'      : bl4p_pb2._sender_timeout,
 	'receiver_timeout'    : bl4p_pb2._receiver_timeout,
 	'completed'           : bl4p_pb2._completed,
+	'canceled'            : bl4p_pb2._canceled,
 	}[status]
 	return result
 
@@ -107,10 +124,11 @@ def makeClosure(function, firstArg):
 def registerRPC(server, bl4p):
 	functionData = \
 	{
-	bl4p_pb2.BL4P_Start    : start,
-	bl4p_pb2.BL4P_Send     : send,
-	bl4p_pb2.BL4P_Receive  : receive,
-	bl4p_pb2.BL4P_GetStatus: getStatus,
+	bl4p_pb2.BL4P_Start      : start,
+	bl4p_pb2.BL4P_CancelStart: cancelStart,
+	bl4p_pb2.BL4P_Send       : send,
+	bl4p_pb2.BL4P_Receive    : receive,
+	bl4p_pb2.BL4P_GetStatus  : getStatus,
 	}
 
 	for requestType, function in functionData.items():

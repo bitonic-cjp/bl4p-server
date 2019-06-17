@@ -17,7 +17,14 @@ class User(Struct):
 	balance = 0 #int: balance
 
 
-TransactionStatus = Enum(['waiting_for_sender', 'waiting_for_receiver', 'sender_timeout', 'receiver_timeout', 'completed'])
+'''
+(initial) -> waiting_for_sender -> waiting_for_receiver -> completed
+waiting_for_sender -> sender_timeout
+waiting_for_receiver -> receiver_timeout
+waiting_for_sender -> canceled
+waiting_for_receiver -> canceled
+'''
+TransactionStatus = Enum(['waiting_for_sender', 'waiting_for_receiver', 'sender_timeout', 'receiver_timeout', 'completed', 'canceled'])
 
 class Transaction(Struct):
 	sender_userid = None   #int or None: sender user ID
@@ -203,6 +210,29 @@ class BL4P:
 			)
 		self.transactions[paymentHash] = tx
 		return amountIncoming, amountOutgoing, paymentHash
+
+
+	def cancelTransaction(self, receiver_userid, paymentHash):
+		'''
+		Cancel transaction initiated by the receiver.
+
+		:param paymentHash: the payment hash
+
+		:raises TransactionNotFound: No transaction was found for this user and hash
+		'''
+
+		tx = self.getTransaction(paymentHash, [TransactionStatus.waiting_for_sender, TransactionStatus.waiting_for_receiver])
+
+		if tx.receiver_userid != receiver_userid:
+			#The transaction exists globally, but not in this user's transactions.
+			raise BL4P.TransactionNotFound()
+
+		if tx.status == TransactionStatus.waiting_for_receiver:
+			#Funds are already sent - give back to sender
+			sender = self.getUser(tx.sender_userid)
+			sender.balance += tx.amountIncoming
+
+		tx.status = TransactionStatus.canceled
 
 
 	def processSenderAck(self, sender_userid, amount, paymentHash):

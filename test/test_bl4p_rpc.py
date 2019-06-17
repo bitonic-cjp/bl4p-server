@@ -47,17 +47,19 @@ class MockBL4P(Mock):
 
 class TestBL4PRPC(unittest.TestCase):
 
-	@patch('bl4p_rpc.start'    , return_value=100)
-	@patch('bl4p_rpc.send'     , return_value=101)
-	@patch('bl4p_rpc.receive'  , return_value=102)
-	@patch('bl4p_rpc.getStatus', return_value=103)
-	def test_registerRPC(self, mock_getStatus, mock_receive, mock_send, mock_start):
+	@patch('bl4p_rpc.start'      , return_value=100)
+	@patch('bl4p_rpc.cancelStart', return_value=101)
+	@patch('bl4p_rpc.send'       , return_value=102)
+	@patch('bl4p_rpc.receive'    , return_value=103)
+	@patch('bl4p_rpc.getStatus'  , return_value=104)
+	def test_registerRPC(self, mock_getStatus, mock_receive, mock_send, mock_cancelStart, mock_start):
 		mocks = \
 		{
-		bl4p_pb2.BL4P_Start    : mock_start,
-		bl4p_pb2.BL4P_Send     : mock_send,
-		bl4p_pb2.BL4P_Receive  : mock_receive,
-		bl4p_pb2.BL4P_GetStatus: mock_getStatus,
+		bl4p_pb2.BL4P_Start      : mock_start,
+		bl4p_pb2.BL4P_CancelStart: mock_cancelStart,
+		bl4p_pb2.BL4P_Send       : mock_send,
+		bl4p_pb2.BL4P_Receive    : mock_receive,
+		bl4p_pb2.BL4P_GetStatus  : mock_getStatus,
 		}
 
 		server = MockServer()
@@ -113,6 +115,33 @@ class TestBL4PRPC(unittest.TestCase):
 
 		bl4p.startTransaction.reset_mock()
 		result = bl4p_rpc.start(bl4p, userID=None, request=request)
+		self.assertTrue(isinstance(result, bl4p_pb2.Error))
+
+
+	def test_cancelStart(self):
+		bl4p = MockBL4P()
+
+		request = Mock()
+		request.payment_hash.data = 5
+
+		#Successfull call
+		bl4p.cancelTransaction = Mock()
+		result = bl4p_rpc.cancelStart(bl4p, userID=4, request=request)
+		self.assertTrue(isinstance(result, bl4p_pb2.BL4P_CancelStartResult))
+		bl4p.cancelTransaction.assert_called_once_with(
+			receiver_userid=4,
+			paymentHash=5
+			)
+
+		#Exceptions
+		for xc in [bl4p.TransactionNotFound()]:
+			bl4p.cancelTransaction.reset_mock()
+			bl4p.cancelTransaction.side_effect=xc
+			result = bl4p_rpc.cancelStart(bl4p, userID=4, request=request)
+			self.assertTrue(isinstance(result, bl4p_pb2.Error))
+
+		bl4p.cancelTransaction.reset_mock()
+		result = bl4p_rpc.cancelStart(bl4p, userID=None, request=request)
 		self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 

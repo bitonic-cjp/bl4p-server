@@ -59,26 +59,38 @@ class TestBL4P(unittest.TestCase):
 		self.receiver.close()
 
 
-	def test_goodFlow_receiverPaysFee(self):
-		def assertStatus(interface, paymentHash, expectedStatus):
-			status = interface.getStatus(payment_hash=paymentHash)
-			self.assertEqual(status, expectedStatus)
+	def assertStatus(self, interface, paymentHash, expectedStatus):
+		status = interface.getStatus(payment_hash=paymentHash)
+		self.assertEqual(status, expectedStatus)
 
+
+	def test_goodFlow_receiverPaysFee(self):
 		#Receiver:
 		senderAmount, receiverAmount, paymentHash = self.receiver.start(amount=100, sender_timeout_delta_ms=5000, locked_timeout_delta_s=5000, receiver_pays_fee=True)
 		self.assertEqual(senderAmount,  100) #not affected by fee
 		self.assertEqual(receiverAmount, 99) #fee subtracted
-		assertStatus(self.receiver, paymentHash, 'waiting_for_sender')
+		self.assertStatus(self.receiver, paymentHash, 'waiting_for_sender')
 
 		#Sender:
 		paymentPreimage = self.sender.send(sender_amount=senderAmount, payment_hash=paymentHash)
-		assertStatus(self.receiver, paymentHash, 'waiting_for_receiver')
-		assertStatus(self.sender, paymentHash, 'waiting_for_receiver')
+		self.assertStatus(self.receiver, paymentHash, 'waiting_for_receiver')
+		self.assertStatus(self.sender, paymentHash, 'waiting_for_receiver')
 
 		#Receiver:
 		self.receiver.receive(payment_preimage=paymentPreimage)
-		assertStatus(self.receiver, paymentHash, 'completed')
-		assertStatus(self.sender, paymentHash, 'completed')
+		self.assertStatus(self.receiver, paymentHash, 'completed')
+		self.assertStatus(self.sender, paymentHash, 'completed')
+
+
+	def test_canceled(self):
+		#Receiver:
+		senderAmount, receiverAmount, paymentHash = self.receiver.start(amount=100, sender_timeout_delta_ms=5000, locked_timeout_delta_s=5000, receiver_pays_fee=True)
+		self.assertEqual(senderAmount,  100) #not affected by fee
+		self.assertEqual(receiverAmount, 99) #fee subtracted
+		self.assertStatus(self.receiver, paymentHash, 'waiting_for_sender')
+
+		self.receiver.cancelStart(paymentHash)
+		self.assertStatus(self.receiver, paymentHash, 'canceled')
 
 
 	def test_offerbook_API(self):
