@@ -3,6 +3,9 @@
 all: test
 
 test:
+	-rm -rf coverage-html
+	-rm -rf .coverage
+	python3-coverage erase
 	python3-coverage run -p test_utils.py
 	python3-coverage run -p test_offer.py
 	python3-coverage run -p test_bl4p_backend.py
