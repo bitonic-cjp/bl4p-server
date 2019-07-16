@@ -151,6 +151,7 @@ class TestBL4PRPC(unittest.TestCase):
 		request = Mock()
 		request.sender_amount.amount = 5
 		request.payment_hash.data = 6
+		request.max_locked_timeout_delta_s = 7
 
 		#Successfull call
 		bl4p.processSenderAck = Mock(
@@ -160,7 +161,7 @@ class TestBL4PRPC(unittest.TestCase):
 		self.assertTrue(isinstance(result, bl4p_pb2.BL4P_SendResult))
 		self.assertEqual(result.payment_preimage.data, b'\x00\xff')
 		bl4p.processSenderAck.assert_called_once_with(
-			sender_userid=4, amount=5, paymentHash=6
+			sender_userid=4, amount=5, paymentHash=6, maxLockedTimeout=7
 			)
 
 		#Exceptions

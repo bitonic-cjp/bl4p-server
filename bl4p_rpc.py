@@ -61,7 +61,8 @@ def send(bl4p, userID, request):
 			bl4p.processSenderAck(
 				sender_userid=userID,
 				amount=request.sender_amount.amount,
-				paymentHash=request.payment_hash.data
+				paymentHash=request.payment_hash.data,
+				maxLockedTimeout=request.max_locked_timeout_delta_s,
 				)
 
 	except bl4p.UserNotFound:

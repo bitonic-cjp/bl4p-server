@@ -235,13 +235,14 @@ class BL4P:
 		tx.status = TransactionStatus.canceled
 
 
-	def processSenderAck(self, sender_userid, amount, paymentHash):
+	def processSenderAck(self, sender_userid, amount, paymentHash, maxLockedTimeout):
 		'''
 		Process acknowledgement by the sender.
 
 		:param sender_userid: the user ID of the sender
 		:param amount: the amount to be transfered from sender to receiver
 		:param paymentHash: the payment hash
+		:param maxLockedTimeout: the maximum time until a locked transaction goes back to sender, in seconds
 
 		:returns: the payment preimage
 
@@ -261,6 +262,15 @@ class BL4P:
 			logging.warning(
 				'processSenderAck: amount mismatch (is: %d; should be: %d)' % \
 				(amount, tx.amountIncoming)
+				)
+			raise BL4P.TransactionNotFound()
+
+		currentTime = time.time()
+		lockedTimeout = tx.receiverTimeout - currentTime
+		if lockedTimeout > maxLockedTimeout:
+			logging.warning(
+				'processSenderAck: locked timeout mismatch (actual: %d > max: %d)' % \
+				(lockedTimeout, maxLockedTimeout)
 				)
 			raise BL4P.TransactionNotFound()
 

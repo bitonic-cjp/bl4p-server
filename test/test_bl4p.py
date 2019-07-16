@@ -72,7 +72,7 @@ class TestBL4P(unittest.TestCase):
 		self.assertStatus(self.receiver, paymentHash, 'waiting_for_sender')
 
 		#Sender:
-		paymentPreimage = self.sender.send(sender_amount=senderAmount, payment_hash=paymentHash)
+		paymentPreimage = self.sender.send(sender_amount=senderAmount, payment_hash=paymentHash, max_locked_timeout_delta_s=5000)
 		self.assertStatus(self.receiver, paymentHash, 'waiting_for_receiver')
 		self.assertStatus(self.sender, paymentHash, 'waiting_for_receiver')
 
