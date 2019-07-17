@@ -18,8 +18,8 @@ server = rpcserver.RPCServer()
 
 
 bl4p = bl4p_backend.BL4P()
-bl4p.users[3] = bl4p_backend.User(id=3, balance=20000000)
-bl4p.users[6] = bl4p_backend.User(id=6, balance=50000000)
+bl4p.users[3] = bl4p_backend.User(id=3, balance=2000000000) #20 000 eur
+bl4p.users[6] = bl4p_backend.User(id=6, balance=5000000000) #50 000 eur
 
 offerBook = offerbook_backend.OfferBook()
 
