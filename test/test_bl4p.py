@@ -8,6 +8,7 @@ sys.path.append('..')
 
 from api.client import Bl4pApi
 from api.offer import Asset, Offer
+from api import selfreport
 import bl4p
 
 
@@ -71,8 +72,17 @@ class TestBL4P(unittest.TestCase):
 		self.assertEqual(receiverAmount, 99) #fee subtracted
 		self.assertStatus(self.receiver, paymentHash, 'waiting_for_sender')
 
+		report = selfreport.serialize(
+			{
+			'paymentHash': paymentHash.hex(),
+			'offerID': '6',
+			'receiverCryptoAmount': '42',
+			'cryptoCurrency': 'btc',
+			})
+		self.receiver.selfReport(report=report, signature=b'foo')
+
 		#Sender:
-		paymentPreimage = self.sender.send(sender_amount=senderAmount, payment_hash=paymentHash, max_locked_timeout_delta_s=5000)
+		paymentPreimage = self.sender.send(sender_amount=senderAmount, payment_hash=paymentHash, max_locked_timeout_delta_s=5000, report=report, signature=b'foo')
 		self.assertStatus(self.receiver, paymentHash, 'waiting_for_receiver')
 		self.assertStatus(self.sender, paymentHash, 'waiting_for_receiver')
 

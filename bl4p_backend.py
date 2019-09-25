@@ -4,6 +4,8 @@ import logging
 import os
 import time
 
+from api import selfreport
+
 from utils import Struct, Enum
 
 
@@ -61,6 +63,14 @@ class BL4P:
 
 
 	class InsufficientFunds(Exception):
+		pass
+
+
+	class SignatureFailure(Exception):
+		pass
+
+
+	class MissingData(Exception):
 		pass
 
 
@@ -212,10 +222,41 @@ class BL4P:
 		return amountIncoming, amountOutgoing, paymentHash
 
 
+	def processSelfReport(self, receiver_userid, report, signature):
+		'''
+		Process self-reporting by the receiver.
+
+		:param receiver_userid: the user ID of the receiver
+		:param report: the serialized report
+		:param signature: the user's signature over the report report
+
+		:raises TransactionNotFound: No transaction was found for this user and hash
+		:raises MissingData: The report is missing required data
+		'''
+
+		#TODO: verify the signature
+
+		#TODO: propagate correct exception type if this fails
+		contents = selfreport.deserialize(report)
+
+		#We require this data:
+		try:
+			paymentHash = bytes.fromhex(contents['paymentHash'])
+			offerID = int(contents['offerID'])
+			receiverCryptoAmount = int(contents['receiverCryptoAmount'])
+			cryptoCurrency = contents['cryptoCurrency']
+		except KeyError:
+			raise BL4P.MissingData()
+
+		#TODO: store report and signature data
+		#TODO: state change
+
+
 	def cancelTransaction(self, receiver_userid, paymentHash):
 		'''
 		Cancel transaction initiated by the receiver.
 
+		:param receiver_userid: the user ID of the receiver
 		:param paymentHash: the payment hash
 
 		:raises TransactionNotFound: No transaction was found for this user and hash
@@ -235,7 +276,7 @@ class BL4P:
 		tx.status = TransactionStatus.canceled
 
 
-	def processSenderAck(self, sender_userid, amount, paymentHash, maxLockedTimeout):
+	def processSenderAck(self, sender_userid, amount, paymentHash, maxLockedTimeout, report, signature):
 		'''
 		Process acknowledgement by the sender.
 
@@ -243,13 +284,35 @@ class BL4P:
 		:param amount: the amount to be transfered from sender to receiver
 		:param paymentHash: the payment hash
 		:param maxLockedTimeout: the maximum time until a locked transaction goes back to sender, in seconds
+		
+		:param report: the serialized report
+		:param signature: the user's signature over the report report
 
 		:returns: the payment preimage
 
 		:raises UserNotFound: No user was found with this ID
 		:raises TransactionNotFound: No transaction was found for this payment hash and amount
 		:raises InsufficientFunds: The sender has insufficient funds to pay the given amount
+		:raises MissingData: The report is missing required data
 		'''
+
+		#TODO: verify the signature
+
+		#TODO: propagate correct exception type if this fails
+		contents = selfreport.deserialize(report)
+
+		#We require this data:
+		try:
+			paymentHash = bytes.fromhex(contents['paymentHash'])
+			offerID = int(contents['offerID'])
+			receiverCryptoAmount = int(contents['receiverCryptoAmount'])
+			cryptoCurrency = contents['cryptoCurrency']
+		except KeyError:
+			raise BL4P.MissingData()
+
+		#TODO: compare against receiver reported data
+
+		#TODO: store report and signature data
 
 		sender = self.getUser(sender_userid)
 

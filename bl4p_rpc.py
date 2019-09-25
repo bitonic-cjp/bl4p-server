@@ -11,7 +11,7 @@ def error(reason):
 
 def start(bl4p, userID, request):
 	if userID is None:
-		return error(bl4p_pb2._Unauthorized)
+		return error(bl4p_pb2.Err_Unauthorized)
 
 	try:
 		senderAmount, receiverAmount, paymentHash = \
@@ -23,11 +23,11 @@ def start(bl4p, userID, request):
 				receiverPaysFee=request.receiver_pays_fee
 				)
 	except bl4p.UserNotFound:
-		return error(bl4p_pb2._InvalidAccount)
+		return error(bl4p_pb2.Err_InvalidAccount)
 	except bl4p.InsufficientAmount:
-		return error(bl4p_pb2._InvalidAmount)
+		return error(bl4p_pb2.Err_InvalidAmount)
 	except bl4p.InvalidTimeout:
-		return error(bl4p_pb2._InvalidAmount)
+		return error(bl4p_pb2.Err_InvalidAmount)
 
 	result = bl4p_pb2.BL4P_StartResult()
 	result.sender_amount.amount = senderAmount
@@ -36,9 +36,29 @@ def start(bl4p, userID, request):
 	return result
 
 
+def selfReport(bl4p, userID, request):
+	if userID is None:
+		return error(bl4p_pb2.Err_Unauthorized)
+
+	try:
+		bl4p.processSelfReport(
+			receiver_userid=userID,
+			report=request.report,
+			signature=request.signature)
+	except bl4p.TransactionNotFound:
+		return error(bl4p_pb2.Err_NoSuchOrder)
+	except bl4p.SignatureFailure:
+		return error(bl4p_pb2.Err_Unauthorized)
+	except bl4p.MissingData:
+		return error(bl4p_pb2.Err_MalformedRequest)
+
+	result = bl4p_pb2.BL4P_SelfReportResult()
+	return result
+
+
 def cancelStart(bl4p, userID, request):
 	if userID is None:
-		return error(bl4p_pb2._Unauthorized)
+		return error(bl4p_pb2.Err_Unauthorized)
 
 	try:
 		bl4p.cancelTransaction(
@@ -46,7 +66,7 @@ def cancelStart(bl4p, userID, request):
 			paymentHash=request.payment_hash.data
 			)
 	except bl4p.TransactionNotFound:
-		return error(bl4p_pb2._NoSuchOrder)
+		return error(bl4p_pb2.Err_NoSuchOrder)
 
 	result = bl4p_pb2.BL4P_CancelStartResult()
 	return result
@@ -54,7 +74,7 @@ def cancelStart(bl4p, userID, request):
 
 def send(bl4p, userID, request):
 	if userID is None:
-		return error(bl4p_pb2._Unauthorized)
+		return error(bl4p_pb2.Err_Unauthorized)
 
 	try:
 		paymentPreimage = \
@@ -63,14 +83,17 @@ def send(bl4p, userID, request):
 				amount=request.sender_amount.amount,
 				paymentHash=request.payment_hash.data,
 				maxLockedTimeout=request.max_locked_timeout_delta_s,
+
+				report=request.report,
+				signature=request.signature,
 				)
 
 	except bl4p.UserNotFound:
-		return error(bl4p_pb2._InvalidAccount)
+		return error(bl4p_pb2.Err_InvalidAccount)
 	except bl4p.TransactionNotFound:
-		return error(bl4p_pb2._NoSuchOrder)
+		return error(bl4p_pb2.Err_NoSuchOrder)
 	except bl4p.InsufficientFunds:
-		return error(bl4p_pb2._BalanceInsufficient)
+		return error(bl4p_pb2.Err_BalanceInsufficient)
 
 	result = bl4p_pb2.BL4P_SendResult()
 	result.payment_preimage.data = paymentPreimage
@@ -83,7 +106,7 @@ def receive(bl4p, userID, request):
 			paymentPreimage=request.payment_preimage.data
 			)
 	except bl4p.TransactionNotFound:
-		return error(bl4p_pb2._NoSuchOrder)
+		return error(bl4p_pb2.Err_NoSuchOrder)
 
 	result = bl4p_pb2.BL4P_ReceiveResult()
 	return result
@@ -91,16 +114,16 @@ def receive(bl4p, userID, request):
 
 def getStatus(bl4p, userID, request):
 	if userID is None:
-		return error(bl4p_pb2._Unauthorized)
+		return error(bl4p_pb2.Err_Unauthorized)
 
 	try:
 		status = bl4p.getTransactionStatus(
 			userid=userID,
 			paymentHash=request.payment_hash.data)
 	except bl4p.UserNotFound:
-		return error(bl4p_pb2._InvalidAccount)
+		return error(bl4p_pb2.Err_InvalidAccount)
 	except bl4p.TransactionNotFound:
-		return error(bl4p_pb2._NoSuchOrder)
+		return error(bl4p_pb2.Err_NoSuchOrder)
 
 	result = bl4p_pb2.BL4P_GetStatusResult()
 	result.status = \
@@ -113,7 +136,6 @@ def getStatus(bl4p, userID, request):
 	'canceled'            : bl4p_pb2._canceled,
 	}[status]
 	return result
-
 
 
 def makeClosure(function, firstArg):
@@ -130,6 +152,7 @@ def registerRPC(server, bl4p):
 	bl4p_pb2.BL4P_Send       : send,
 	bl4p_pb2.BL4P_Receive    : receive,
 	bl4p_pb2.BL4P_GetStatus  : getStatus,
+	bl4p_pb2.BL4P_SelfReport : selfReport,
 	}
 
 	for requestType, function in functionData.items():

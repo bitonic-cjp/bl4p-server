@@ -77,17 +77,26 @@ class Bl4pApi:
 		return result.sender_amount.amount, result.receiver_amount.amount, result.payment_hash.data
 
 
+	def selfReport(self, report, signature):
+		request = bl4p_pb2.BL4P_SelfReport()
+		request.report = report
+		request.signature = signature
+		self.apiCall(request)
+
+
 	def cancelStart(self, payment_hash):
 		request = bl4p_pb2.BL4P_CancelStart()
 		request.payment_hash.data = payment_hash
 		self.apiCall(request)
 
 
-	def send(self, sender_amount, payment_hash, max_locked_timeout_delta_s):
+	def send(self, sender_amount, payment_hash, max_locked_timeout_delta_s, report, signature):
 		request = bl4p_pb2.BL4P_Send()
 		request.sender_amount.amount = sender_amount
 		request.payment_hash.data = payment_hash
 		request.max_locked_timeout_delta_s = max_locked_timeout_delta_s
+		request.report = report
+		request.signature = signature
 		result = self.apiCall(request)
 		return result.payment_preimage.data
 

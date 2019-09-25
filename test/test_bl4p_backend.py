@@ -6,6 +6,7 @@ import unittest
 sys.path.append('..')
 
 import bl4p_backend
+from api import selfreport
 
 
 
@@ -31,6 +32,26 @@ class TestBL4P(unittest.TestCase):
 		return self.bl4p.transactions[paymentHash].status
 
 
+	def standardReceiverReport(self, paymentHash):
+		return \
+		{
+		'paymentHash': paymentHash.hex(),
+		'offerID': '42',
+		'receiverCryptoAmount': '6',
+		'cryptoCurrency': 'btc'
+		}
+
+
+	def standardSenderReport(self, paymentHash):
+		return \
+		{
+		'paymentHash': paymentHash.hex(),
+		'offerID': '42',
+		'receiverCryptoAmount': '6',
+		'cryptoCurrency': 'btc'
+		}
+
+
 	def test_goodFlow_receiverPaysFee(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
@@ -43,8 +64,11 @@ class TestBL4P(unittest.TestCase):
 		self.assertEqual(self.getBalance(self.receiverID), 200)
 		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_sender')
 
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
+
 		#Sender:
-		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+		#TODO: add self report data to call
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
 		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_receiver')
@@ -70,8 +94,10 @@ class TestBL4P(unittest.TestCase):
 		self.assertEqual(self.getBalance(self.receiverID), 200)
 		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_sender')
 
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
+
 		#Sender:
-		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
 		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_receiver')
@@ -91,6 +117,7 @@ class TestBL4P(unittest.TestCase):
 
 		#Receiver:
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.1, lockedTimeout=5000, receiverPaysFee=True)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
 
 		#Sender:
 		time.sleep(0.2)
@@ -107,9 +134,10 @@ class TestBL4P(unittest.TestCase):
 
 		#Receiver:
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.05, lockedTimeout=0.1, receiverPaysFee=True)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
 
 		#Sender:
-		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 
 		#Receiver:
 		time.sleep(0.2)
@@ -130,6 +158,7 @@ class TestBL4P(unittest.TestCase):
 		self.assertEqual(self.getBalance(self.senderID), 500)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
 		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_sender')
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
 
 		#Receiver:
 		self.bl4p.cancelTransaction(self.receiverID, paymentHash)
@@ -149,9 +178,10 @@ class TestBL4P(unittest.TestCase):
 		self.assertEqual(self.getBalance(self.senderID), 500)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
 		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_sender')
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
 
 		#Sender:
-		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 		self.assertEqual(self.getBalance(self.senderID), 500 - senderAmount)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
 		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, paymentHash), 'waiting_for_receiver')
@@ -220,14 +250,14 @@ class TestBL4P(unittest.TestCase):
 			self.bl4p.cancelTransaction(self.receiverID, paymentHash=paymentHash)
 
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.01, lockedTimeout=1.02, receiverPaysFee=True)
-		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 		time.sleep(1.1)
 		self.bl4p.processTimeouts()
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p.cancelTransaction(self.receiverID, paymentHash=paymentHash)
 
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
-		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 		self.bl4p.processReceiverClaim(paymentPreimage)
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p.cancelTransaction(self.receiverID, paymentHash=paymentHash)
@@ -235,8 +265,10 @@ class TestBL4P(unittest.TestCase):
 
 	def test_processSenderAck_UserNotFound(self):
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
+
 		with self.assertRaises(self.bl4p.UserNotFound):
-			self.bl4p.processSenderAck(1312, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+			self.bl4p.processSenderAck(1312, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 
 
 	def test_processSenderAck_TransactionNotFound(self):
@@ -245,31 +277,36 @@ class TestBL4P(unittest.TestCase):
 
 		#Tx was never created:
 		with self.assertRaises(self.bl4p.TransactionNotFound):
-			self.bl4p.processSenderAck(self.senderID, amount=100, paymentHash=b'x'*32, maxLockedTimeout=5000)
+			self.bl4p.processSenderAck(self.senderID, amount=100, paymentHash=b'x'*32, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(b'x'*32)), signature=b'bar')
 
 		#Tx was created, but timed out:
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.01, lockedTimeout=5000, receiverPaysFee=True)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
+
 		time.sleep(0.1)
 		self.assertEqual(self.bl4p.processTimeouts(), None)
 		with self.assertRaises(self.bl4p.TransactionNotFound):
-			self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+			self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 
 		#Tx was created, but already finished by now:
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
-		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 		self.bl4p.processReceiverClaim(paymentPreimage)
 		with self.assertRaises(self.bl4p.TransactionNotFound):
-			self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+			self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 
 		#Tx was created, but has a different amount:
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
 		with self.assertRaises(self.bl4p.TransactionNotFound):
-			self.bl4p.processSenderAck(self.senderID, amount=senderAmount+1, paymentHash=paymentHash, maxLockedTimeout=5000)
+			self.bl4p.processSenderAck(self.senderID, amount=senderAmount+1, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 
 		#Tx was created, but has an incompatible locked timeout:
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
 		with self.assertRaises(self.bl4p.TransactionNotFound):
-			self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=4999)
+			self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=4999, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 
 
 	def test_processSenderAck_InsufficientFunds(self):
@@ -278,13 +315,15 @@ class TestBL4P(unittest.TestCase):
 
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=501, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		self.assertEqual(senderAmount, 501)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
 		with self.assertRaises(self.bl4p.InsufficientFunds):
-			self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+			self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 			self.assertEqual(self.getBalance(self.senderID), 500)
 
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=500, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
 		self.assertEqual(senderAmount, 500)
-		self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
+		self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 		self.assertEqual(self.getBalance(self.senderID), 0)
 
 
@@ -293,15 +332,16 @@ class TestBL4P(unittest.TestCase):
 		self.setBalance(self.receiverID, 200)
 
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
-		paymentPreimage1 = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
+		paymentPreimage1 = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 		self.assertEqual(self.getBalance(self.senderID), 400)
 
-		paymentPreimage2 = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+		paymentPreimage2 = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 		self.assertEqual(paymentPreimage1, paymentPreimage2)
 		self.assertEqual(self.getBalance(self.senderID), 400)
 
 		with self.assertRaises(self.bl4p.TransactionNotFound):
-			self.bl4p.processSenderAck(self.receiverID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+			self.bl4p.processSenderAck(self.receiverID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 			self.assertEqual(self.getBalance(self.senderID), 400)
 
 
@@ -313,11 +353,13 @@ class TestBL4P(unittest.TestCase):
 			self.bl4p.processReceiverClaim(b'x'*32)
 
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
 		paymentPreimage = self.bl4p.transactions[paymentHash].preimage
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p.processReceiverClaim(paymentPreimage)
 
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=0.01, lockedTimeout=5000, receiverPaysFee=True)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
 		paymentPreimage = self.bl4p.transactions[paymentHash].preimage
 		time.sleep(0.1)
 		self.bl4p.processTimeouts()
@@ -327,7 +369,8 @@ class TestBL4P(unittest.TestCase):
 		self.assertEqual(self.getBalance(self.receiverID), 200)
 
 		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
-		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash)), b'bar')
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=5000, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 		self.bl4p.processReceiverClaim(paymentPreimage)
 
 		self.assertEqual(self.getBalance(self.receiverID), 200 + receiverAmount)
@@ -336,6 +379,15 @@ class TestBL4P(unittest.TestCase):
 			self.bl4p.processReceiverClaim(paymentPreimage)
 
 		self.assertEqual(self.getBalance(self.receiverID), 200 + receiverAmount)
+
+
+	def test_processSelfReport_MissingData(self):
+		senderAmount, receiverAmount, paymentHash = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=5, lockedTimeout=5000, receiverPaysFee=True)
+		for missing in ['paymentHash', 'offerID', 'receiverCryptoAmount', 'cryptoCurrency']:
+			receiverReport = self.standardReceiverReport(paymentHash)
+			del receiverReport[missing]
+			with self.assertRaises(self.bl4p.MissingData):
+				self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(receiverReport), b'bar')
 
 
 	def test_getTransactionStatus_UserNotFound(self):
@@ -364,6 +416,10 @@ class TestBL4P(unittest.TestCase):
 		senderAmount, receiverAmount, paymentHash2 = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=1, lockedTimeout=5000, receiverPaysFee=True)
 		senderAmount, receiverAmount, paymentHash3 = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=2, lockedTimeout=5000, receiverPaysFee=True)
 		senderAmount, receiverAmount, paymentHash4 = self.bl4p.startTransaction(self.receiverID, amount=100, senderTimeout=3, lockedTimeout=5000, receiverPaysFee=True)
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash1)), b'bar')
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash2)), b'bar')
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash3)), b'bar')
+		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(self.standardReceiverReport(paymentHash4)), b'bar')
 
 		time.sleep(0.5)
 		ret = self.bl4p.processTimeouts()
@@ -411,7 +467,7 @@ class TestBL4P(unittest.TestCase):
 		statusAfter = self.getTransactionStatus(paymentHash)
 		self.assertEqual(statusBefore, statusAfter)
 
-		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=0.2)
+		paymentPreimage = self.bl4p.processSenderAck(self.senderID, amount=senderAmount, paymentHash=paymentHash, maxLockedTimeout=0.2, report=selfreport.serialize(self.standardSenderReport(paymentHash)), signature=b'bar')
 
 		statusBefore = self.getTransactionStatus(paymentHash)
 		self.bl4p.processTimeouts()

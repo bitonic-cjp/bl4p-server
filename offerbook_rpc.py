@@ -12,7 +12,7 @@ def error(reason):
 
 def addOffer(offerBook, userID, request):
 	if userID is None:
-		return error(bl4p_pb2._Unauthorized)
+		return error(bl4p_pb2.Err_Unauthorized)
 
 	result = bl4p_pb2.BL4P_AddOfferResult()
 
@@ -22,14 +22,14 @@ def addOffer(offerBook, userID, request):
 			offer=Offer.fromPB2(request.offer)
 			)
 	except offerBook.InvalidOffer:
-		return error(bl4p_pb2._NoSuchOrder)
+		return error(bl4p_pb2.Err_NoSuchOrder)
 
 	return result
 
 
 def listOffers(offerBook, userID, request):
 	if userID is None:
-		return error(bl4p_pb2._Unauthorized)
+		return error(bl4p_pb2.Err_Unauthorized)
 
 	result = bl4p_pb2.BL4P_ListOffersResult()
 	data = offerBook.listOffers(
@@ -44,7 +44,7 @@ def listOffers(offerBook, userID, request):
 
 def removeOffer(offerBook, userID, request):
 	if userID is None:
-		return error(bl4p_pb2._Unauthorized)
+		return error(bl4p_pb2.Err_Unauthorized)
 
 	try:
 		offerBook.removeOffer(
@@ -52,7 +52,7 @@ def removeOffer(offerBook, userID, request):
 			offerID=request.offerID
 			)
 	except offerBook.OfferNotFound:
-		return error(bl4p_pb2._NoSuchOrder)
+		return error(bl4p_pb2.Err_NoSuchOrder)
 
 	result = bl4p_pb2.BL4P_RemoveOfferResult()
 	return result

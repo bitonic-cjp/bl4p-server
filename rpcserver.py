@@ -74,7 +74,7 @@ class RPCServer:
 				except KeyError:
 					logging.warning('Received unsupported request type')
 					result = bl4p_pb2.Error()
-					result.reason = bl4p_pb2._MalformedRequest
+					result.reason = bl4p_pb2.Err_MalformedRequest
 				else:
 					try:
 						result = function(userID, request)
@@ -82,7 +82,7 @@ class RPCServer:
 						logging.error('Something unexpected went wrong: ' + str(e))
 						logging.error(traceback.format_exc())
 						result = bl4p_pb2.Error()
-						result.reason = bl4p_pb2._Unknown
+						result.reason = bl4p_pb2.Err_Unknown
 
 					#After a function call, time-outs may have changed:
 					self.manageTimeouts()
