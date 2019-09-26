@@ -128,12 +128,13 @@ def getStatus(bl4p, userID, request):
 	result = bl4p_pb2.BL4P_GetStatusResult()
 	result.status = \
 	{
-	'waiting_for_sender'  : bl4p_pb2._waiting_for_sender,
-	'waiting_for_receiver': bl4p_pb2._waiting_for_receiver,
-	'sender_timeout'      : bl4p_pb2._sender_timeout,
-	'receiver_timeout'    : bl4p_pb2._receiver_timeout,
-	'completed'           : bl4p_pb2._completed,
-	'canceled'            : bl4p_pb2._canceled,
+	'waiting_for_selfreport': bl4p_pb2._waiting_for_selfreport,
+	'waiting_for_sender'    : bl4p_pb2._waiting_for_sender,
+	'waiting_for_receiver'  : bl4p_pb2._waiting_for_receiver,
+	'sender_timeout'        : bl4p_pb2._sender_timeout,
+	'receiver_timeout'      : bl4p_pb2._receiver_timeout,
+	'completed'             : bl4p_pb2._completed,
+	'canceled'              : bl4p_pb2._canceled,
 	}[status]
 	return result
 

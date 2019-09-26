@@ -20,13 +20,14 @@ class User(Struct):
 
 
 '''
-(initial) -> waiting_for_sender -> waiting_for_receiver -> completed
+(initial) -> waiting_for_selfreport -> waiting_for_sender -> waiting_for_receiver -> completed
 waiting_for_sender -> sender_timeout
 waiting_for_receiver -> receiver_timeout
+waiting_for_selfreport -> canceled
 waiting_for_sender -> canceled
 waiting_for_receiver -> canceled
 '''
-TransactionStatus = Enum(['waiting_for_sender', 'waiting_for_receiver', 'sender_timeout', 'receiver_timeout', 'completed', 'canceled'])
+TransactionStatus = Enum(['waiting_for_selfreport', 'waiting_for_sender', 'waiting_for_receiver', 'sender_timeout', 'receiver_timeout', 'completed', 'canceled'])
 
 class Transaction(Struct):
 	sender_userid = None   #int or None: sender user ID
@@ -216,7 +217,7 @@ class BL4P:
 			preimage = preimage,
 			senderTimeout = senderTimeout,
 			receiverTimeout = receiverTimeout,
-			status = TransactionStatus.waiting_for_sender
+			status = TransactionStatus.waiting_for_selfreport
 			)
 		self.transactions[paymentHash] = tx
 		return amountIncoming, amountOutgoing, paymentHash
@@ -248,8 +249,15 @@ class BL4P:
 		except KeyError:
 			raise BL4P.MissingData()
 
+		tx = self.getTransaction(paymentHash, [TransactionStatus.waiting_for_selfreport])
+
+		if tx.receiver_userid != receiver_userid:
+			#The transaction exists globally, but not in this user's transactions.
+			raise BL4P.TransactionNotFound()
+
 		#TODO: store report and signature data
-		#TODO: state change
+
+		tx.status = TransactionStatus.waiting_for_sender
 
 
 	def cancelTransaction(self, receiver_userid, paymentHash):
@@ -262,7 +270,9 @@ class BL4P:
 		:raises TransactionNotFound: No transaction was found for this user and hash
 		'''
 
-		tx = self.getTransaction(paymentHash, [TransactionStatus.waiting_for_sender, TransactionStatus.waiting_for_receiver])
+		tx = self.getTransaction(paymentHash,
+			[TransactionStatus.waiting_for_selfreport, TransactionStatus.waiting_for_sender, TransactionStatus.waiting_for_receiver]
+			)
 
 		if tx.receiver_userid != receiver_userid:
 			#The transaction exists globally, but not in this user's transactions.

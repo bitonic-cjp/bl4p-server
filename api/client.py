@@ -113,12 +113,13 @@ class Bl4pApi:
 		result = self.apiCall(request)
 		return \
 		{
-		bl4p_pb2._waiting_for_sender  : 'waiting_for_sender',
-		bl4p_pb2._waiting_for_receiver: 'waiting_for_receiver',
-		bl4p_pb2._sender_timeout      : 'sender_timeout',
-		bl4p_pb2._receiver_timeout    : 'receiver_timeout',
-		bl4p_pb2._completed           : 'completed',
-		bl4p_pb2._canceled            : 'canceled',
+		bl4p_pb2._waiting_for_selfreport: 'waiting_for_selfreport',
+		bl4p_pb2._waiting_for_sender    : 'waiting_for_sender',
+		bl4p_pb2._waiting_for_receiver  : 'waiting_for_receiver',
+		bl4p_pb2._sender_timeout        : 'sender_timeout',
+		bl4p_pb2._receiver_timeout      : 'receiver_timeout',
+		bl4p_pb2._completed             : 'completed',
+		bl4p_pb2._canceled              : 'canceled',
 		}[result.status]
 
 

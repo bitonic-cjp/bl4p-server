@@ -128,12 +128,13 @@ enum ErrorReason {
 }
 
 enum BL4P_TransactionStatus {
-    _waiting_for_sender = 0;
-    _waiting_for_receiver = 1;
-    _sender_timeout = 2;
-    _receiver_timeout = 3;
-    _completed = 4;
-    _canceled = 5;
+    _waiting_for_selfreport = 0;
+    _waiting_for_sender = 1;
+    _waiting_for_receiver = 2;
+    _sender_timeout = 3;
+    _receiver_timeout = 4;
+    _completed = 5;
+    _canceled = 6;
 }
 
 message BL4P_Amount {

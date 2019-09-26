@@ -70,7 +70,7 @@ class TestBL4P(unittest.TestCase):
 		senderAmount, receiverAmount, paymentHash = self.receiver.start(amount=100, sender_timeout_delta_ms=5000, locked_timeout_delta_s=5000, receiver_pays_fee=True)
 		self.assertEqual(senderAmount,  100) #not affected by fee
 		self.assertEqual(receiverAmount, 99) #fee subtracted
-		self.assertStatus(self.receiver, paymentHash, 'waiting_for_sender')
+		self.assertStatus(self.receiver, paymentHash, 'waiting_for_selfreport')
 
 		report = selfreport.serialize(
 			{
@@ -80,6 +80,7 @@ class TestBL4P(unittest.TestCase):
 			'cryptoCurrency': 'btc',
 			})
 		self.receiver.selfReport(report=report, signature=b'foo')
+		self.assertStatus(self.receiver, paymentHash, 'waiting_for_sender')
 
 		#Sender:
 		paymentPreimage = self.sender.send(sender_amount=senderAmount, payment_hash=paymentHash, max_locked_timeout_delta_s=5000, report=report, signature=b'foo')
@@ -97,6 +98,16 @@ class TestBL4P(unittest.TestCase):
 		senderAmount, receiverAmount, paymentHash = self.receiver.start(amount=100, sender_timeout_delta_ms=5000, locked_timeout_delta_s=5000, receiver_pays_fee=True)
 		self.assertEqual(senderAmount,  100) #not affected by fee
 		self.assertEqual(receiverAmount, 99) #fee subtracted
+		self.assertStatus(self.receiver, paymentHash, 'waiting_for_selfreport')
+
+		report = selfreport.serialize(
+			{
+			'paymentHash': paymentHash.hex(),
+			'offerID': '6',
+			'receiverCryptoAmount': '42',
+			'cryptoCurrency': 'btc',
+			})
+		self.receiver.selfReport(report=report, signature=b'foo')
 		self.assertStatus(self.receiver, paymentHash, 'waiting_for_sender')
 
 		self.receiver.cancelStart(paymentHash)

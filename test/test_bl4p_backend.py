@@ -87,9 +87,10 @@ class TestBL4P(unittest.TestCase):
 		self.assertEqual(data.receiverAmount, 99) #fee subtracted
 		self.assertEqual(self.getBalance(self.senderID), 500)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
-		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, data.paymentHash), 'waiting_for_sender')
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, data.paymentHash), 'waiting_for_selfreport')
 
 		self.bl4p_processSelfReport(data)
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, data.paymentHash), 'waiting_for_sender')
 
 		#Sender:
 		self.bl4p_processSenderAck(data)
@@ -116,9 +117,10 @@ class TestBL4P(unittest.TestCase):
 		self.assertEqual(data.receiverAmount, 100) #not affected by fee
 		self.assertEqual(self.getBalance(self.senderID), 500)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
-		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, data.paymentHash), 'waiting_for_sender')
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, data.paymentHash), 'waiting_for_selfreport')
 
 		self.bl4p_processSelfReport(data)
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, data.paymentHash), 'waiting_for_sender')
 
 		#Sender:
 		self.bl4p_processSenderAck(data)
@@ -181,8 +183,27 @@ class TestBL4P(unittest.TestCase):
 		self.assertEqual(data.receiverAmount, 99) #fee subtracted
 		self.assertEqual(self.getBalance(self.senderID), 500)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
-		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, data.paymentHash), 'waiting_for_sender')
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, data.paymentHash), 'waiting_for_selfreport')
+
+		#Receiver:
+		self.bl4p_cancelTransaction(data)
+		self.assertEqual(self.getBalance(self.senderID), 500)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, data.paymentHash), 'canceled')
+
+
+	def test_canceled_after_selfreport(self):
+		self.setBalance(self.senderID, 500)
+		self.setBalance(self.receiverID, 200)
+
+		#Receiver:
+		data = self.bl4p_startTransaction()
 		self.bl4p_processSelfReport(data)
+		self.assertEqual(data.senderAmount,  100) #not affected by fee
+		self.assertEqual(data.receiverAmount, 99) #fee subtracted
+		self.assertEqual(self.getBalance(self.senderID), 500)
+		self.assertEqual(self.getBalance(self.receiverID), 200)
+		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, data.paymentHash), 'waiting_for_sender')
 
 		#Receiver:
 		self.bl4p_cancelTransaction(data)
@@ -197,12 +218,12 @@ class TestBL4P(unittest.TestCase):
 
 		#Receiver:
 		data = self.bl4p_startTransaction()
+		self.bl4p_processSelfReport(data)
 		self.assertEqual(data.senderAmount,  100) #not affected by fee
 		self.assertEqual(data.receiverAmount, 99) #fee subtracted
 		self.assertEqual(self.getBalance(self.senderID), 500)
 		self.assertEqual(self.getBalance(self.receiverID), 200)
 		self.assertEqual(self.bl4p.getTransactionStatus(self.receiverID, data.paymentHash), 'waiting_for_sender')
-		self.bl4p_processSelfReport(data)
 
 		#Sender:
 		self.bl4p_processSenderAck(data)
@@ -257,6 +278,42 @@ class TestBL4P(unittest.TestCase):
 			self.bl4p_startTransaction(lockedTimeout=40000000)
 
 
+	def test_processSelfReport_MissingData(self):
+		data = self.bl4p_startTransaction()
+		for missing in ['paymentHash', 'offerID', 'receiverCryptoAmount', 'cryptoCurrency']:
+			report = \
+			{
+			'paymentHash': data.paymentHash.hex(),
+			'offerID': '42',
+			'receiverCryptoAmount': '6',
+			'cryptoCurrency': 'btc'
+			}
+			del report[missing]
+			with self.assertRaises(self.bl4p.MissingData):
+				self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(report), b'bar')
+
+
+	def test_processSelfReport_TransactionNotFound(self):
+		self.setBalance(self.senderID, 500)
+		self.setBalance(self.receiverID, 200)
+
+		data = Dummy()
+		data.paymentHash = b'x'*32
+		with self.assertRaises(self.bl4p.TransactionNotFound):
+			self.bl4p_processSelfReport(data)
+
+
+		data = self.bl4p_startTransaction()
+		self.bl4p_processSelfReport(data)
+		with self.assertRaises(self.bl4p.TransactionNotFound):
+			self.bl4p_processSelfReport(data)
+
+		data = self.bl4p_startTransaction()
+		self.receiverID = 1312
+		with self.assertRaises(self.bl4p.TransactionNotFound):
+			self.bl4p_processSelfReport(data)
+
+
 	def test_cancelTransaction_TransactionNotFound(self):
 		self.setBalance(self.senderID, 500)
 		self.setBalance(self.receiverID, 200)
@@ -271,6 +328,7 @@ class TestBL4P(unittest.TestCase):
 			self.bl4p.cancelTransaction(self.senderID, paymentHash=data.paymentHash)
 
 		data = self.bl4p_startTransaction(senderTimeout=0.01)
+		self.bl4p_processSelfReport(data)
 		time.sleep(0.1)
 		self.bl4p.processTimeouts()
 		with self.assertRaises(self.bl4p.TransactionNotFound):
@@ -419,21 +477,6 @@ class TestBL4P(unittest.TestCase):
 			self.bl4p_processReceiverClaim(data)
 
 		self.assertEqual(self.getBalance(self.receiverID), 200 + data.receiverAmount)
-
-
-	def test_processSelfReport_MissingData(self):
-		data = self.bl4p_startTransaction()
-		for missing in ['paymentHash', 'offerID', 'receiverCryptoAmount', 'cryptoCurrency']:
-			report = \
-			{
-			'paymentHash': data.paymentHash.hex(),
-			'offerID': '42',
-			'receiverCryptoAmount': '6',
-			'cryptoCurrency': 'btc'
-			}
-			del report[missing]
-			with self.assertRaises(self.bl4p.MissingData):
-				self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(report), b'bar')
 
 
 	def test_getTransactionStatus_UserNotFound(self):
