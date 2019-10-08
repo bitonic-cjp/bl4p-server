@@ -244,7 +244,7 @@ class BL4P:
 		try:
 			paymentHash = bytes.fromhex(contents['paymentHash'])
 			offerID = int(contents['offerID'])
-			receiverCryptoAmount = int(contents['receiverCryptoAmount'])
+			receiverCryptoAmount = decimal.Decimal(contents['receiverCryptoAmount'])
 			cryptoCurrency = contents['cryptoCurrency']
 		except KeyError:
 			raise BL4P.MissingData()
@@ -315,7 +315,7 @@ class BL4P:
 		try:
 			paymentHash = bytes.fromhex(contents['paymentHash'])
 			offerID = int(contents['offerID'])
-			receiverCryptoAmount = int(contents['receiverCryptoAmount'])
+			receiverCryptoAmount = decimal.Decimal(contents['receiverCryptoAmount'])
 			cryptoCurrency = contents['cryptoCurrency']
 		except KeyError:
 			raise BL4P.MissingData()
