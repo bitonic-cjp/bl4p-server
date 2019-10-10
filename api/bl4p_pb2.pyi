@@ -8,6 +8,8 @@ Msg_Error                 = ... #type: int
 
 Msg_BL4P_Start            = ... #type: int
 Msg_BL4P_StartResult      = ... #type: int
+Msg_BL4P_SelfReport       = ... #type: int
+Msg_BL4P_SelfReportResult = ... #type: int
 Msg_BL4P_CancelStart      = ... #type: int
 Msg_BL4P_CancelStartResult= ... #type: int
 Msg_BL4P_Send             = ... #type: int
@@ -49,6 +51,31 @@ class BL4P_StartResult:
 	receiver_amount = None #type: BL4P_Amount
 	payment_hash    = None #type: BL4P_CryptoData
 
+
+class BL4P_SelfReportContents:
+	class pair:
+		name  = '' #type: str
+		value = '' #type: str
+
+	class PairList(Iterable[BL4P_SelfReportContents.pair]):
+		def add(self) -> BL4P_SelfReportContents.pair:
+			pass
+
+	items = None #type: PairList
+
+	def ParseFromString(self, s: bytes) -> None:
+		pass
+
+	def SerializeToString(self) -> bytes:
+		pass
+
+class BL4P_SelfReport:
+	report    = b'' #type: bytes
+	signature = b'' #type: bytes
+
+class BL4P_SelfReportResult:
+	pass
+
 class BL4P_CancelStart:
 	payment_hash = None #type: BL4P_CryptoData
 
@@ -58,7 +85,10 @@ class BL4P_CancelStartResult:
 class BL4P_Send:
 	sender_amount              = None #type: BL4P_Amount
 	payment_hash               = None #type: BL4P_CryptoData
-	max_locked_timeout_delta_s = 0    #type: int 
+	max_locked_timeout_delta_s = 0    #type: int
+
+	report                     = b'' #type: bytes
+	signature                  = b'' #type: bytes
 
 class BL4P_SendResult:
 	request          = 0    #type: int
