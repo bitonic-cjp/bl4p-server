@@ -24,6 +24,7 @@ Requires:
 * Python 3 Protobuf (in Debian: python3-protobuf package)
 * Protoc protobuf compiler (in Debian: protobuf-compiler package)
 * Python3 coverage (in Debian: python3-coverage)
+* Python3 secp256k1 (in Debian: pip3 install secp256k1)
 
 Currently, there is no installation procedure.
 Just run the program from the source tree.

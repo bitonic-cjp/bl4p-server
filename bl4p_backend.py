@@ -4,6 +4,8 @@ import logging
 import os
 import time
 
+import secp256k1
+
 from api import selfreport
 
 from utils import Struct, Enum
@@ -15,8 +17,10 @@ sha256 = lambda preimage: hashlib.sha256(preimage).digest()
 
 
 class User(Struct):
-	id = None   #int: user ID
-	balance = 0 #int: balance
+	id = None     #int: user ID
+	balance = 0   #int: balance
+	pubKey = None #secp256k1.PublicKey: public key for self-reporting
+
 
 
 '''
@@ -231,11 +235,18 @@ class BL4P:
 		:param report: the serialized report
 		:param signature: the user's signature over the report report
 
+		:raises SignatureFailure: the signature is not correct
 		:raises TransactionNotFound: No transaction was found for this user and hash
 		:raises MissingData: The report is missing required data
 		'''
 
-		#TODO: verify the signature
+		user = self.getUser(receiver_userid)
+		try:
+			sigObject = user.pubKey.ecdsa_deserialize(signature)
+			assert user.pubKey.ecdsa_verify(report, sigObject)
+		except:
+			#On *anything* that goes wrong, including assertion failure:
+			raise BL4P.SignatureFailure()
 
 		#TODO: propagate correct exception type if this fails
 		contents = selfreport.deserialize(report)
@@ -300,13 +311,21 @@ class BL4P:
 
 		:returns: the payment preimage
 
+		:raises SignatureFailure: the signature is not correct
 		:raises UserNotFound: No user was found with this ID
 		:raises TransactionNotFound: No transaction was found for this payment hash and amount
 		:raises InsufficientFunds: The sender has insufficient funds to pay the given amount
 		:raises MissingData: The report is missing required data
 		'''
 
-		#TODO: verify the signature
+		sender = self.getUser(sender_userid)
+
+		try:
+			sigObject = sender.pubKey.ecdsa_deserialize(signature)
+			assert sender.pubKey.ecdsa_verify(report, sigObject)
+		except:
+			#On *anything* that goes wrong, including assertion failure:
+			raise BL4P.SignatureFailure()
 
 		#TODO: propagate correct exception type if this fails
 		contents = selfreport.deserialize(report)
@@ -323,8 +342,6 @@ class BL4P:
 		#TODO: compare against receiver reported data
 
 		#TODO: store report and signature data
-
-		sender = self.getUser(sender_userid)
 
 		tx = self.getTransaction(paymentHash,
 			[

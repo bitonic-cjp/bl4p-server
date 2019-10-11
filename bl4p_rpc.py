@@ -45,10 +45,12 @@ def selfReport(bl4p, userID, request):
 			receiver_userid=userID,
 			report=request.report,
 			signature=request.signature)
-	except bl4p.TransactionNotFound:
-		return error(bl4p_pb2.Err_NoSuchOrder)
+	except bl4p.UserNotFound:
+		return error(bl4p_pb2.Err_InvalidAccount)
 	except bl4p.SignatureFailure:
 		return error(bl4p_pb2.Err_Unauthorized)
+	except bl4p.TransactionNotFound:
+		return error(bl4p_pb2.Err_NoSuchOrder)
 	except bl4p.MissingData:
 		return error(bl4p_pb2.Err_MalformedRequest)
 
@@ -90,10 +92,14 @@ def send(bl4p, userID, request):
 
 	except bl4p.UserNotFound:
 		return error(bl4p_pb2.Err_InvalidAccount)
+	except bl4p.SignatureFailure:
+		return error(bl4p_pb2.Err_Unauthorized)
 	except bl4p.TransactionNotFound:
 		return error(bl4p_pb2.Err_NoSuchOrder)
 	except bl4p.InsufficientFunds:
 		return error(bl4p_pb2.Err_BalanceInsufficient)
+	except bl4p.MissingData:
+		return error(bl4p_pb2.Err_MalformedRequest)
 
 	result = bl4p_pb2.BL4P_SendResult()
 	result.payment_preimage.data = paymentPreimage

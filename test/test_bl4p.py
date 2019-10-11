@@ -1,8 +1,11 @@
+import hashlib
 import sys
 import threading
 import time
 import unittest
 import urllib.request
+
+import secp256k1
 
 sys.path.append('..')
 
@@ -10,6 +13,10 @@ from api.client import Bl4pApi
 from api.offer import Asset, Offer
 from api import selfreport
 import bl4p
+
+
+
+sha256 = lambda preimage: hashlib.sha256(preimage).digest()
 
 
 
@@ -53,6 +60,8 @@ class TestBL4P(unittest.TestCase):
 	def setUp(self):
 		self.sender = Bl4pApi('ws://localhost:8000/', '3', '3')
 		self.receiver = Bl4pApi('ws://localhost:8000/', '6', '6')
+		self.senderKey = secp256k1.PrivateKey(privkey=sha256(b'3'))
+		self.receiverKey = secp256k1.PrivateKey(privkey=sha256(b'6'))
 
 
 	def tearDown(self):
@@ -79,11 +88,15 @@ class TestBL4P(unittest.TestCase):
 			'receiverCryptoAmount': '42',
 			'cryptoCurrency': 'btc',
 			})
-		self.receiver.selfReport(report=report, signature=b'foo')
+		sigObject = self.receiverKey.ecdsa_sign(report)
+		serializedSig = self.receiverKey.ecdsa_serialize(sigObject)
+		self.receiver.selfReport(report=report, signature=serializedSig)
 		self.assertStatus(self.receiver, paymentHash, 'waiting_for_sender')
 
 		#Sender:
-		paymentPreimage = self.sender.send(sender_amount=senderAmount, payment_hash=paymentHash, max_locked_timeout_delta_s=5000, report=report, signature=b'foo')
+		sigObject = self.senderKey.ecdsa_sign(report)
+		serializedSig = self.senderKey.ecdsa_serialize(sigObject)
+		paymentPreimage = self.sender.send(sender_amount=senderAmount, payment_hash=paymentHash, max_locked_timeout_delta_s=5000, report=report, signature=serializedSig)
 		self.assertStatus(self.receiver, paymentHash, 'waiting_for_receiver')
 		self.assertStatus(self.sender, paymentHash, 'waiting_for_receiver')
 
@@ -107,7 +120,9 @@ class TestBL4P(unittest.TestCase):
 			'receiverCryptoAmount': '42',
 			'cryptoCurrency': 'btc',
 			})
-		self.receiver.selfReport(report=report, signature=b'foo')
+		sigObject = self.receiverKey.ecdsa_sign(report)
+		serializedSig = self.receiverKey.ecdsa_serialize(sigObject)
+		self.receiver.selfReport(report=report, signature=serializedSig)
 		self.assertStatus(self.receiver, paymentHash, 'waiting_for_sender')
 
 		self.receiver.cancelStart(paymentHash)

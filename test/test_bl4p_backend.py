@@ -1,12 +1,19 @@
 import decimal
+import hashlib
 import sys
 import time
 import unittest
+
+import secp256k1
 
 sys.path.append('..')
 
 import bl4p_backend
 from api import selfreport
+
+
+
+sha256 = lambda preimage: hashlib.sha256(preimage).digest()
 
 
 
@@ -17,13 +24,15 @@ class Dummy:
 
 class TestBL4P(unittest.TestCase):
 	def setUp(self):
+		self.receiverKey = secp256k1.PrivateKey(privkey=sha256(b'3'))
+		self.senderKey = secp256k1.PrivateKey(privkey=sha256(b'6'))
 		self.receiverID = 3
 		self.senderID = 6
 		self.bl4p = bl4p_backend.BL4P()
 		self.bl4p.fee_base = 1
 		self.bl4p.fee_rate = 0
-		self.bl4p.users[self.senderID] = bl4p_backend.User(id=self.senderID, balance=0)
-		self.bl4p.users[self.receiverID] = bl4p_backend.User(id=self.receiverID, balance=0)
+		self.bl4p.users[self.senderID]   = bl4p_backend.User(id=self.senderID  , balance=0, pubKey=self.senderKey.pubkey  )
+		self.bl4p.users[self.receiverID] = bl4p_backend.User(id=self.receiverID, balance=0, pubKey=self.receiverKey.pubkey)
 
 
 	def setBalance(self, userID, balance):
@@ -54,7 +63,10 @@ class TestBL4P(unittest.TestCase):
 		'receiverCryptoAmount': '6',
 		'cryptoCurrency': 'btc'
 		}
-		self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(report), b'bar')
+		serializedReport = selfreport.serialize(report)
+		sigObject = self.receiverKey.ecdsa_sign(serializedReport)
+		serializedSig = self.receiverKey.ecdsa_serialize(sigObject)
+		self.bl4p.processSelfReport(self.receiverID, serializedReport, serializedSig)
 
 
 	def bl4p_cancelTransaction(self, data):
@@ -69,8 +81,15 @@ class TestBL4P(unittest.TestCase):
 		'receiverCryptoAmount': '6',
 		'cryptoCurrency': 'btc'
 		}
+		serializedReport = selfreport.serialize(report)
+		sigObject = self.senderKey.ecdsa_sign(serializedReport)
+		serializedSig = self.senderKey.ecdsa_serialize(sigObject)
 		data.paymentPreimage = self.bl4p.processSenderAck(
-			self.senderID, amount=data.senderAmount, paymentHash=data.paymentHash, maxLockedTimeout=data.lockedTimeout, report=selfreport.serialize(report), signature=b'bar')
+			self.senderID,
+			amount=data.senderAmount, paymentHash=data.paymentHash,
+			maxLockedTimeout=data.lockedTimeout,
+			report=serializedReport, signature=serializedSig
+			)
 
 
 	def bl4p_processReceiverClaim(self, data):
@@ -278,6 +297,27 @@ class TestBL4P(unittest.TestCase):
 			self.bl4p_startTransaction(lockedTimeout=40000000)
 
 
+	def test_processSelfReport_SignatureFailure(self):
+		data = self.bl4p_startTransaction()
+		report = selfreport.serialize({
+			'paymentHash': data.paymentHash.hex(),
+			'offerID': '42',
+			'receiverCryptoAmount': '6',
+			'cryptoCurrency': 'btc'
+			})
+
+		#It is a signature, just not a correct one
+		wrongKey = secp256k1.PrivateKey()
+		sigObject = wrongKey.ecdsa_sign(report)
+		serializedSig = wrongKey.ecdsa_serialize(sigObject)
+		with self.assertRaises(self.bl4p.SignatureFailure):
+			self.bl4p.processSelfReport(self.receiverID, report, serializedSig)
+
+		#It is not even a signature
+		with self.assertRaises(self.bl4p.SignatureFailure):
+			self.bl4p.processSelfReport(self.receiverID, report, b'foobar')
+
+
 	def test_processSelfReport_MissingData(self):
 		data = self.bl4p_startTransaction()
 		for missing in ['paymentHash', 'offerID', 'receiverCryptoAmount', 'cryptoCurrency']:
@@ -289,8 +329,11 @@ class TestBL4P(unittest.TestCase):
 			'cryptoCurrency': 'btc'
 			}
 			del report[missing]
+			serializedReport = selfreport.serialize(report)
+			sigObject = self.receiverKey.ecdsa_sign(serializedReport)
+			serializedSig = self.receiverKey.ecdsa_serialize(sigObject)
 			with self.assertRaises(self.bl4p.MissingData):
-				self.bl4p.processSelfReport(self.receiverID, selfreport.serialize(report), b'bar')
+				self.bl4p.processSelfReport(self.receiverID, serializedReport, serializedSig)
 
 
 	def test_processSelfReport_TransactionNotFound(self):
@@ -309,7 +352,8 @@ class TestBL4P(unittest.TestCase):
 			self.bl4p_processSelfReport(data)
 
 		data = self.bl4p_startTransaction()
-		self.receiverID = 1312
+		self.receiverID = self.senderID
+		self.receiverKey = self.senderKey
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p_processSelfReport(data)
 
@@ -356,6 +400,62 @@ class TestBL4P(unittest.TestCase):
 		self.senderID = 1312
 		with self.assertRaises(self.bl4p.UserNotFound):
 			self.bl4p_processSenderAck(data)
+
+
+	def test_processSenderAck_SignatureFailure(self):
+		data = self.bl4p_startTransaction()
+		self.bl4p_processSelfReport(data)
+		report = selfreport.serialize({
+			'paymentHash': data.paymentHash.hex(),
+			'offerID': '42',
+			'receiverCryptoAmount': '6',
+			'cryptoCurrency': 'btc'
+			})
+
+		#It is a signature, just not a correct one
+		wrongKey = secp256k1.PrivateKey()
+		sigObject = wrongKey.ecdsa_sign(report)
+		serializedSig = wrongKey.ecdsa_serialize(sigObject)
+		with self.assertRaises(self.bl4p.SignatureFailure):
+			self.bl4p.processSenderAck(
+				self.senderID,
+				amount=data.senderAmount, paymentHash=data.paymentHash,
+				maxLockedTimeout=data.lockedTimeout,
+				report=report, signature=serializedSig
+				)
+
+		#It is not even a signature
+		with self.assertRaises(self.bl4p.SignatureFailure):
+			self.bl4p.processSenderAck(
+				self.senderID,
+				amount=data.senderAmount, paymentHash=data.paymentHash,
+				maxLockedTimeout=data.lockedTimeout,
+				report=report, signature=b'foobar'
+				)
+
+
+	def test_processSenderAck_MissingData(self):
+		data = self.bl4p_startTransaction()
+		self.bl4p_processSelfReport(data)
+		for missing in ['paymentHash', 'offerID', 'receiverCryptoAmount', 'cryptoCurrency']:
+			report = \
+			{
+			'paymentHash': data.paymentHash.hex(),
+			'offerID': '42',
+			'receiverCryptoAmount': '6',
+			'cryptoCurrency': 'btc'
+			}
+			del report[missing]
+			serializedReport = selfreport.serialize(report)
+			sigObject = self.senderKey.ecdsa_sign(serializedReport)
+			serializedSig = self.senderKey.ecdsa_serialize(sigObject)
+			with self.assertRaises(self.bl4p.MissingData):
+				self.bl4p.processSenderAck(
+					self.senderID,
+					amount=data.senderAmount, paymentHash=data.paymentHash,
+					maxLockedTimeout=data.lockedTimeout,
+					report=serializedReport, signature=serializedSig
+					)
 
 
 	def test_processSenderAck_TransactionNotFound(self):
@@ -436,6 +536,7 @@ class TestBL4P(unittest.TestCase):
 
 		realSenderID = self.senderID
 		self.senderID = self.receiverID
+		self.senderKey = self.receiverKey
 		with self.assertRaises(self.bl4p.TransactionNotFound):
 			self.bl4p_processSenderAck(data)
 		self.assertEqual(self.getBalance(realSenderID), 400)

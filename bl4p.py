@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
+import hashlib
 import logging
+
+import secp256k1
 
 import bl4p_backend
 import bl4p_rpc
@@ -13,13 +16,21 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+
+
+sha256 = lambda preimage: hashlib.sha256(preimage).digest()
+
+
+
 server = rpcserver.RPCServer()
 
-
-
 bl4p = bl4p_backend.BL4P()
-bl4p.users[3] = bl4p_backend.User(id=3, balance=2000000000) #20 000 eur
-bl4p.users[6] = bl4p_backend.User(id=6, balance=5000000000) #50 000 eur
+
+#Some dummy users:
+key3 = secp256k1.PrivateKey(privkey=sha256(b'3'))
+key6 = secp256k1.PrivateKey(privkey=sha256(b'6'))
+bl4p.users[3] = bl4p_backend.User(id=3, balance=2000000000, pubKey=key3.pubkey) #20 000 eur
+bl4p.users[6] = bl4p_backend.User(id=6, balance=5000000000, pubKey=key6.pubkey) #50 000 eur
 
 offerBook = offerbook_backend.OfferBook()
 

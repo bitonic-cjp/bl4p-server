@@ -178,7 +178,7 @@ class TestBL4PRPC(unittest.TestCase):
 			)
 
 		#Exceptions
-		for xc in [bl4p.UserNotFound(), bl4p.TransactionNotFound(), bl4p.InsufficientFunds()]:
+		for xc in [bl4p.UserNotFound(), bl4p.SignatureFailure(), bl4p.TransactionNotFound(), bl4p.InsufficientFunds(), bl4p.MissingData()]:
 			bl4p.processSenderAck.reset_mock()
 			bl4p.processSenderAck.side_effect=xc
 			result = bl4p_rpc.send(bl4p, userID=4, request=request)
@@ -256,7 +256,7 @@ class TestBL4PRPC(unittest.TestCase):
 			)
 
 		#Exceptions
-		for xc in [bl4p.TransactionNotFound(), bl4p.SignatureFailure(), bl4p.MissingData()]:
+		for xc in [bl4p.UserNotFound(), bl4p.TransactionNotFound(), bl4p.SignatureFailure(), bl4p.MissingData()]:
 			bl4p.processSelfReport.reset_mock()
 			bl4p.processSelfReport.side_effect=xc
 			result = bl4p_rpc.selfReport(bl4p, userID=4, request=request)
