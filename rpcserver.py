@@ -102,17 +102,24 @@ class RPCServer:
 
 		startServer = websockets.serve(
 			self.handleMessages,
-			'localhost', PORT
+			'localhost', PORT,
+			loop = self.loop,
 			)
 		self.server = self.loop.run_until_complete(startServer)
-		self.loop.run_forever()
+		self.stopFuture = self.loop.create_future()
+		#self.loop.run_forever()
+		self.loop.run_until_complete(self.stopFuture)
+		self.server.close()
 		self.loop.run_until_complete(self.server.wait_closed())
 		self.loop.close()
 
 
 	def close(self):
-		self.server.close()
-		self.loop.stop()
+		#Only set the future if it hasn't been set yet:
+		try:
+			self.stopFuture.result()
+		except asyncio.exceptions.InvalidStateError:
+			self.stopFuture.set_result(True)
 
 
 	def manageTimeouts(self):

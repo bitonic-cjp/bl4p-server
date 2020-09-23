@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import threading
 import time
@@ -13,20 +14,14 @@ from api import bl4p_pb2
 
 
 class ServerThread(threading.Thread):
-	def __init__(self, server):
+	def __init__(self):
 		threading.Thread.__init__(self)
-		self.server = server
-
-		def stopThread():
-			if self.stopRequested:
-				self.server.close()
-
-			return 0.1
-
-		self.server.registerTimeoutFunction(stopThread)
+		self.initialized = False
+		self.stopRequested = False
 
 
 	def start(self):
+		self.initialized = False
 		self.stopRequested = False
 		threading.Thread.start(self)
 
@@ -37,16 +32,31 @@ class ServerThread(threading.Thread):
 
 
 	def run(self):
+		self.server = rpcserver.RPCServer()
+		asyncio.set_event_loop(self.server.loop)
+
+		def stopThread():
+			if self.stopRequested:
+				self.server.close()
+			return 0.1
+
+		self.server.registerTimeoutFunction(stopThread)
+
+		self.initialized = True
 		self.server.run()
 
 
 
 class TestRPCServer(unittest.TestCase):
 	def setUp(self):
-		self.server = rpcserver.RPCServer()
-		self.serverThread = ServerThread(self.server)
+		self.serverThread = ServerThread()
 		self.serverThread.start()
+
 		time.sleep(0.1)
+		while not self.serverThread.initialized:
+			time.sleep(0.1)
+
+		self.server = self.serverThread.server
 
 		self.callLog = []
 		self.generateException = False
@@ -130,9 +140,10 @@ class TestRPCServer(unittest.TestCase):
 			return dt2
 
 		#We want a clean server without a running thread:
+		self.client.close()
 		self.serverThread.stop()
-		server = rpcserver.RPCServer()
 
+		server = rpcserver.RPCServer()
 		server.loop = Mock()
 
 		server.registerTimeoutFunction(f1)
