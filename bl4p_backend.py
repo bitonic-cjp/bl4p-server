@@ -208,9 +208,12 @@ class BL4P:
 		senderTimeout = currentTime + senderTimeout
 		receiverTimeout = currentTime + lockedTimeout
 
-		logging.debug(
+		logging.info(
 			'startTransaction: amountIncoming: %d; amountOutgoing: %d' % \
 			(amountIncoming, amountOutgoing)
+			)
+		logging.info('  Current balance of receiving user %d: %d' % \
+			(receiver_userid, self.getUser(receiver_userid).balance)
 			)
 
 		tx = Transaction(
@@ -266,6 +269,8 @@ class BL4P:
 			#The transaction exists globally, but not in this user's transactions.
 			raise BL4P.TransactionNotFound()
 
+		logging.info('selfReport: ' + str(contents))
+
 		#TODO: store report and signature data
 
 		tx.status = TransactionStatus.waiting_for_sender
@@ -293,6 +298,8 @@ class BL4P:
 			#Funds are already sent - give back to sender
 			sender = self.getUser(tx.sender_userid)
 			sender.balance += tx.amountIncoming
+
+		logging.info('cancelTransaction')
 
 		tx.status = TransactionStatus.canceled
 
@@ -389,7 +396,17 @@ class BL4P:
 			logging.warning('processSenderAck: insufficient funds')
 			raise BL4P.InsufficientFunds()
 
+		logging.info('senderAck')
+		logging.info('  Old balance of sending user %d: %d' % \
+			(sender_userid, sender.balance)
+			)
+
 		sender.balance -= amount
+
+		logging.info('  New balance of sending user %d: %d' % \
+			(sender_userid, sender.balance)
+			)
+
 		tx.sender_userid = sender_userid
 		tx.status = TransactionStatus.waiting_for_receiver
 		return tx.preimage
@@ -419,7 +436,18 @@ class BL4P:
 		tx = self.getTransaction(paymentHash, [TransactionStatus.waiting_for_receiver])
 		receiver = self.getUser(tx.receiver_userid)
 
+		logging.info('receiverAck')
+
+		logging.info('  Old balance of receiving user %d: %d' % \
+			(tx.receiver_userid, receiver.balance)
+			)
+
 		receiver.balance += tx.amountOutgoing
+
+		logging.info('  New balance of receiving user %d: %d' % \
+			(tx.receiver_userid, receiver.balance)
+			)
+
 		tx.status = TransactionStatus.completed
 
 
