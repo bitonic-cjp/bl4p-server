@@ -20,11 +20,18 @@ Requires:
 
 * Python 3
 * Websockets for Python (in Debian: python3-websockets package)
-* Websocket-client for Python (in Debian: python3-websocket package)
 * Python 3 Protobuf (in Debian: python3-protobuf package)
-* Protoc protobuf compiler (in Debian: protobuf-compiler package)
-* Python3 coverage (in Debian: python3-coverage)
 * Python3 secp256k1 (in Debian: pip3 install secp256k1)
+
+For testing, additionally requires:
+
+* Websocket-client for Python (in Debian: python3-websocket package)
+* Python3 coverage (in Debian: python3-coverage)
+
+For rebuilding the proto files:
+
+* Protoc protobuf compiler (in Debian: protobuf-compiler package)
+
 
 Currently, there is no installation procedure.
 Just run the program from the source tree.
