@@ -9,10 +9,10 @@ import secp256k1
 
 sys.path.append('..')
 
-from api.client import Bl4pApi
-from api.offer import Asset, Offer
-from api import selfreport
-import bl4p
+from bl4p_server.api.client import Bl4pApi
+from bl4p_server.api.offer import Asset, Offer
+from bl4p_server.api import selfreport
+import bl4p_server.__main__ as bl4p
 
 
 

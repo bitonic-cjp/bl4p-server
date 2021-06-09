@@ -4,8 +4,8 @@ from unittest.mock import patch, Mock
 
 sys.path.append('..')
 
-from api import bl4p_pb2, offer_pb2
-import offerbook_rpc
+from bl4p_server.api import bl4p_pb2, offer_pb2
+from bl4p_server import offerbook_rpc
 
 
 
@@ -40,10 +40,10 @@ class MockOffer(Mock):
 
 class TestOfferBookRPC(unittest.TestCase):
 
-	@patch('offerbook_rpc.addOffer'   , return_value=100)
-	@patch('offerbook_rpc.listOffers' , return_value=101)
-	@patch('offerbook_rpc.removeOffer', return_value=102)
-	@patch('offerbook_rpc.findOffers' , return_value=103)
+	@patch('bl4p_server.offerbook_rpc.addOffer'   , return_value=100)
+	@patch('bl4p_server.offerbook_rpc.listOffers' , return_value=101)
+	@patch('bl4p_server.offerbook_rpc.removeOffer', return_value=102)
+	@patch('bl4p_server.offerbook_rpc.findOffers' , return_value=103)
 	def test_registerRPC(self, mock_findOffers, mock_removeOffer, mock_listOffers, mock_addOffer):
 		mocks = \
 		{
@@ -73,7 +73,7 @@ class TestOfferBookRPC(unittest.TestCase):
 				mock.reset_mock()
 
 
-	@patch('offerbook_rpc.Offer')
+	@patch('bl4p_server.offerbook_rpc.Offer')
 	def test_addOffer(self, mock_Offer):
 		mock_Offer.fromPB2 = Mock(
 			return_value='fromPB2'
@@ -163,7 +163,7 @@ class TestOfferBookRPC(unittest.TestCase):
 		self.assertTrue(isinstance(result, bl4p_pb2.Error))
 
 
-	@patch('offerbook_rpc.Offer')
+	@patch('bl4p_server.offerbook_rpc.Offer')
 	def test_findOffers(self, mock_Offer):
 		mock_Offer.fromPB2 = Mock(
 			return_value='fromPB2'

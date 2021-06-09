@@ -31,7 +31,7 @@ Just run the program from the source tree.
 
 # Usage
 
-BL4P can be started by starting `./bl4p.py` from the root of the source tree.
+BL4P can be started by starting `./server.py` from the root of the source tree.
 
 Some important limitations:
 

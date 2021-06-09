@@ -6,9 +6,9 @@ import time
 
 import secp256k1
 
-from api import selfreport
+from .api import selfreport
 
-from utils import Struct, Enum
+from .utils import Struct, Enum
 
 
 

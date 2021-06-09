@@ -3,8 +3,8 @@ import unittest
 
 sys.path.append('..')
 
-from api import offer_pb2
-from api import offer
+from bl4p_server.api import offer_pb2
+from bl4p_server.api import offer
 
 
 

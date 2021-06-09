@@ -3,8 +3,8 @@ import unittest
 
 sys.path.append('..')
 
-from api import bl4p_pb2
-from api import selfreport
+from bl4p_server.api import bl4p_pb2
+from bl4p_server.api import selfreport
 
 
 

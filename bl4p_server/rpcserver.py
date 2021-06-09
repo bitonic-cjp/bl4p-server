@@ -4,8 +4,8 @@ import traceback
 
 import websockets
 
-from api.serialization import serialize, deserialize
-from api import bl4p_pb2
+from .api.serialization import serialize, deserialize
+from .api import bl4p_pb2
 
 
 

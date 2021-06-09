@@ -7,9 +7,9 @@ from unittest.mock import Mock
 
 sys.path.append('..')
 
-import rpcserver
-from api.client import Bl4pApi
-from api import bl4p_pb2
+from bl4p_server import rpcserver
+from bl4p_server.api.client import Bl4pApi
+from bl4p_server.api import bl4p_pb2
 
 
 

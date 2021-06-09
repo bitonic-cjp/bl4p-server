@@ -4,8 +4,8 @@ from unittest.mock import patch, Mock
 
 sys.path.append('..')
 
-from api import bl4p_pb2
-import bl4p_rpc
+from bl4p_server.api import bl4p_pb2
+from bl4p_server import bl4p_rpc
 
 
 
@@ -55,12 +55,12 @@ class MockBL4P(Mock):
 
 class TestBL4PRPC(unittest.TestCase):
 
-	@patch('bl4p_rpc.start'      , return_value=100)
-	@patch('bl4p_rpc.cancelStart', return_value=101)
-	@patch('bl4p_rpc.send'       , return_value=102)
-	@patch('bl4p_rpc.receive'    , return_value=103)
-	@patch('bl4p_rpc.getStatus'  , return_value=104)
-	@patch('bl4p_rpc.selfReport' , return_value=105)
+	@patch('bl4p_server.bl4p_rpc.start'      , return_value=100)
+	@patch('bl4p_server.bl4p_rpc.cancelStart', return_value=101)
+	@patch('bl4p_server.bl4p_rpc.send'       , return_value=102)
+	@patch('bl4p_server.bl4p_rpc.receive'    , return_value=103)
+	@patch('bl4p_server.bl4p_rpc.getStatus'  , return_value=104)
+	@patch('bl4p_server.bl4p_rpc.selfReport' , return_value=105)
 	def test_registerRPC(self, mock_selfReport, mock_getStatus, mock_receive, mock_send, mock_cancelStart, mock_start):
 		mocks = \
 		{

@@ -1,5 +1,5 @@
-from api import bl4p_pb2
-from api.offer import Offer
+from .api import bl4p_pb2
+from .api.offer import Offer
 
 
 

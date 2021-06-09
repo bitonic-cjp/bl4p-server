@@ -3,7 +3,7 @@ import unittest
 
 sys.path.append('..')
 
-import utils
+from bl4p_server import utils
 
 
 

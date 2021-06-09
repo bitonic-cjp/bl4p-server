@@ -3,7 +3,7 @@ import unittest
 
 sys.path.append('..')
 
-import offerbook_backend
+from bl4p_server import offerbook_backend
 
 
 

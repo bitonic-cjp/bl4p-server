@@ -1,6 +1,6 @@
 import binascii
 
-from api import bl4p_pb2
+from .api import bl4p_pb2
 
 
 def error(reason):

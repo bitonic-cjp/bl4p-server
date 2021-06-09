@@ -1,15 +1,13 @@
-#!/usr/bin/env python3
-
 import hashlib
 import logging
 
 import secp256k1
 
-import bl4p_backend
-import bl4p_rpc
-import offerbook_backend
-import offerbook_rpc
-import rpcserver
+from . import bl4p_backend
+from . import bl4p_rpc
+from . import offerbook_backend
+from . import offerbook_rpc
+from . import rpcserver
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s: %(message)s',

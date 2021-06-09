@@ -8,8 +8,8 @@ import secp256k1
 
 sys.path.append('..')
 
-import bl4p_backend
-from api import selfreport
+from bl4p_server import bl4p_backend
+from bl4p_server.api import selfreport
 
 
 
