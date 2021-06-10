@@ -7,7 +7,14 @@ from unittest.mock import Mock
 
 sys.path.append('..')
 
+testHost = '127.0.0.1'
+testPort = 8000
+testURL = 'ws://%s:%d/' % (testHost, testPort)
+
 from bl4p_server import rpcserver
+rpcserver.HOST = testHost
+rpcserver.PORT = testPort
+
 from bl4p_server.api.client import Bl4pApi
 from bl4p_server.api import bl4p_pb2
 
@@ -65,7 +72,7 @@ class TestRPCServer(unittest.TestCase):
 			self.APIFunction
 			)
 
-		self.client = Bl4pApi('ws://localhost:8000/', '3', '3')
+		self.client = Bl4pApi(testURL, '3', '3')
 
 
 	def tearDown(self):
@@ -109,7 +116,7 @@ class TestRPCServer(unittest.TestCase):
 
 	def test_incorrectPassword(self):
 		self.client.close()
-		self.client = Bl4pApi('ws://localhost:8000/', '3', 'wrong')
+		self.client = Bl4pApi(testURL, '3', 'wrong')
 
 		senderAmount, receiverAmount, paymentHash = self.client.start(
 			amount=100, sender_timeout_delta_ms=5000, locked_timeout_delta_s=5000, receiver_pays_fee=False)

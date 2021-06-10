@@ -8,8 +8,8 @@ from .api.serialization import serialize, deserialize
 from .api import bl4p_pb2
 
 
-
-PORT=8000
+HOST = 'localhost'
+PORT = 8000
 
 
 
@@ -102,7 +102,7 @@ class RPCServer:
 
 		startServer = websockets.serve(
 			self.handleMessages,
-			'localhost', PORT,
+			HOST, PORT,
 			loop = self.loop,
 			)
 		self.server = self.loop.run_until_complete(startServer)

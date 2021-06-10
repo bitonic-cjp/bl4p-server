@@ -9,6 +9,14 @@ import secp256k1
 
 sys.path.append('..')
 
+testHost = '127.0.0.1'
+testPort = 8000
+testURL = 'ws://%s:%d/' % (testHost, testPort)
+
+from bl4p_server import rpcserver
+rpcserver.HOST = testHost
+rpcserver.PORT = testPort
+
 from bl4p_server.api.client import Bl4pApi
 from bl4p_server.api.offer import Asset, Offer
 from bl4p_server.api import selfreport
@@ -58,8 +66,8 @@ class TestBL4P(unittest.TestCase):
 
 
 	def setUp(self):
-		self.sender = Bl4pApi('ws://localhost:8000/', '3', '3')
-		self.receiver = Bl4pApi('ws://localhost:8000/', '6', '6')
+		self.sender = Bl4pApi(testURL, '3', '3')
+		self.receiver = Bl4pApi(testURL, '6', '6')
 		self.senderKey = secp256k1.PrivateKey(privkey=sha256(b'3'))
 		self.receiverKey = secp256k1.PrivateKey(privkey=sha256(b'6'))
 
