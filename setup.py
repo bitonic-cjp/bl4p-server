@@ -11,5 +11,5 @@ setup(
 		"protobuf>=3.6.1",
 		"secp256k1>=0.13.2",
 	],
-	extras_require={"testing": ["coverage>=5.2.1", "websocket-client>=0.53.0", "black"]},
+	extras_require={"testing": ["coverage>=4.5.2", "websocket-client>=0.53.0", "black"]},
 )
