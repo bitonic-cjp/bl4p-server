@@ -14,8 +14,6 @@ testPort = 8000
 testURL = 'ws://%s:%d/' % (testHost, testPort)
 
 from bl4p_server import rpcserver
-rpcserver.HOST = testHost
-rpcserver.PORT = testPort
 
 from bl4p_server.api.client import Bl4pApi
 from bl4p_server.api.offer import Asset, Offer
@@ -43,12 +41,11 @@ class ServerThread(threading.Thread):
 
 		def stopThread():
 			if self.stopRequested:
-				bl4p.server.close()
+				bl4p.stopServer()
 
 			return 0.1
 
-		bl4p.server.registerTimeoutFunction(stopThread)
-		bl4p.main()
+		bl4p.main(timeoutFunctions=[stopThread])
 
 
 

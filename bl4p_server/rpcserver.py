@@ -8,13 +8,11 @@ from .api.serialization import serialize, deserialize
 from .api import bl4p_pb2
 
 
-HOST = 'localhost'
-PORT = 8000
-
-
 
 class RPCServer:
-	def __init__(self):
+	def __init__(self, host, port):
+		self.host = host
+		self.port = port
 		self.RPCFunctions = {}
 		self.timeoutFunctions = []
 
@@ -102,7 +100,7 @@ class RPCServer:
 
 		startServer = websockets.serve(
 			self.handleMessages,
-			HOST, PORT,
+			self.host, self.port,
 			loop = self.loop,
 			)
 		self.server = self.loop.run_until_complete(startServer)

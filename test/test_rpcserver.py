@@ -12,9 +12,6 @@ testPort = 8000
 testURL = 'ws://%s:%d/' % (testHost, testPort)
 
 from bl4p_server import rpcserver
-rpcserver.HOST = testHost
-rpcserver.PORT = testPort
-
 from bl4p_server.api.client import Bl4pApi
 from bl4p_server.api import bl4p_pb2
 
@@ -39,7 +36,7 @@ class ServerThread(threading.Thread):
 
 
 	def run(self):
-		self.server = rpcserver.RPCServer()
+		self.server = rpcserver.RPCServer(testHost, testPort)
 		asyncio.set_event_loop(self.server.loop)
 
 		def stopThread():
@@ -150,7 +147,7 @@ class TestRPCServer(unittest.TestCase):
 		self.client.close()
 		self.serverThread.stop()
 
-		server = rpcserver.RPCServer()
+		server = rpcserver.RPCServer(testHost, testPort)
 		server.loop = Mock()
 
 		server.registerTimeoutFunction(f1)
