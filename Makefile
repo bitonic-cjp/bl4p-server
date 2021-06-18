@@ -6,3 +6,6 @@ proto:
 test:
 	make -C test
 
+test_minimal:
+	make -C test test_minimal
+
